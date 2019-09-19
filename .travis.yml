@@ -10,18 +10,16 @@ env:
     - SCANNER_VERSION="4.1"
 
 script:
-  - >-
-    docker build "4"
-    --tag "sonar-scanner-cli:$SCANNER_VERSION"
-    --tag "sonarsource/sonar-scanner-cli:$SCANNER_VERSION"
-    --tag "sonarsource/sonar-scanner-cli:latest"
+  - docker build "4"
+      --tag "sonar-scanner-cli:$SCANNER_VERSION"
+      --tag "sonarsource/sonar-scanner-cli:$SCANNER_VERSION"
+      --tag "sonarsource/sonar-scanner-cli:latest"
   - ./run-tests.sh "sonar-scanner-cli:$SCANNER_VERSION"
 
 deploy:
   provider: script
-  script: >-
-    docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
+  script: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
     && docker push sonarsource/sonar-scanner-cli:$SCANNER_VERSION
     && docker push sonarsource/sonar-scanner-cli:latest
   on:
-    branch: master
+    branch: MMF-1827-travis-deploy
