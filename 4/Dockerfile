@@ -29,9 +29,8 @@ RUN wget -U "scannercli" -q -O /usr/local/sonar-scanner-cli.zip https://binaries
     && mv node-${NODEJS_VERSION}-linux-x64 ${NODEJS_HOME} \
     && npm install -g typescript
 
-COPY bin /usr/bin/
-
 USER scanner-cli
+COPY bin /usr/bin/
 WORKDIR /usr/src
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
