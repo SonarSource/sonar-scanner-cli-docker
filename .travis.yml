@@ -5,6 +5,23 @@ language: bash
 services:
   - docker
 
+env:
+  global:
+    - SCANNER_VERSION="4.1"
+
 script:
-  - docker build "4" --tag "sonar-scanner-cli:4.1"
-  - ./run-tests.sh "sonar-scanner-cli:4.1"
+  - >-
+    docker build "4"
+    --tag "sonar-scanner-cli:$SCANNER_VERSION"
+    --tag "sonarsource/sonar-scanner-cli:$SCANNER_VERSION"
+    --tag "sonarsource/sonar-scanner-cli:latest"
+  - ./run-tests.sh "sonar-scanner-cli:$SCANNER_VERSION"
+
+deploy:
+  provider: script
+  script: >-
+    docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
+    && docker push sonarsource/sonar-scanner-cli:$SCANNER_VERSION
+    && docker push sonarsource/sonar-scanner-cli:latest
+  on:
+    branch: master
