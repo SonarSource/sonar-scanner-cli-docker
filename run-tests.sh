@@ -4,9 +4,14 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+generate_id() {
+  LC_ALL=C tr -dc 'a-z' </dev/urandom | head -c 13 ; echo
+}
+
 port=9000
 containers=()
-network=$(LC_ALL=C tr -dc 'a-z' </dev/urandom | head -c 13 ; echo)
+sonarqube_container_name="it-sonarqube"
+network="it-network"
 
 print_usage() {
   cat <<EOF
@@ -42,7 +47,7 @@ require() {
 }
 
 create_network() {
-  docker network create "$network"
+  docker network create "$network" || true
 }
 
 destroy_network() {
@@ -77,17 +82,19 @@ wait_for_sonarqube() {
 
 test_scanner() {
   local scanner_finished_successfuly=no container_name
-  container_name=$(LC_ALL=C tr -dc 'a-z' </dev/urandom | head -c 13 ; echo)
-  echo "testing image $1 in container $container_name"
+  container_name=$(generate_id)
+  info "testing image $1 in container $container_name"
 
   git clone https://github.com/SonarSource/sonar-scanning-examples.git "$container_name"
-  echo "sonar.projectKey=$container_name-test" >>"$(pwd)/$container_name/sonarqube-scanner/sonar-project.properties"
-  echo "sonar.host.url=http://${containers[0]}:9000" >>"$(pwd)/$container_name/sonarqube-scanner/sonar-project.properties"
+
+  scanner_props_location="$(pwd)/$container_name/sonarqube-scanner/sonar-project.properties"
+  echo "sonar.projectKey=$container_name-test" >> "$scanner_props_location"
+  echo "sonar.host.url=http://${sonarqube_container_name}:9000" >> "$scanner_props_location"
 
   docker run --network="$network" --name="$container_name" -it -v "$(pwd)/$container_name/sonarqube-scanner:/usr/src" "$1"
   containers+=("$container_name")
   docker wait "$container_name"
-  echo "Container $container_name stopped."
+  info "Container $container_name stopped."
   if docker logs "$container_name" | grep 'INFO: EXECUTION SUCCESS'; then
     scanner_finished_successfuly=yes
   fi
@@ -98,25 +105,21 @@ test_scanner() {
 }
 
 launch_sonarqube() {
-  local container_name
-  container_name=$(LC_ALL=C tr -dc 'a-z' </dev/urandom | head -c 13 ; echo)
-
-  echo "Starting SonarQube in container $container_name in detached mode..."
-  docker run --network="$network" --name="$container_name" -d -p $port:9000 sonarqube
-  containers+=("$container_name")
+  info "Starting SonarQube in container $sonarqube_container_name in detached mode..."
+  docker run --network="$network" --name="$sonarqube_container_name" -d -p $port:9000 sonarqube
+  containers+=("$sonarqube_container_name")
   if wait_for_sonarqube ; then
-    echo "SonarQube has been started."
+    info "SonarQube has been started."
   else
-    echo "Failed to launch SonarQube"
-    exit 1
+    fatal "Failed to launch SonarQube"
   fi
 }
 
 clean_up() {
-  echo "Stopping and removing containers: [${containers[*]}]"
+  info "Stopping and removing containers: [${containers[*]}]"
   docker stop ${containers[*]}
   docker rm ${containers[*]}
-  echo "Containers [${containers[*]}] have been stopped and removed."
+  info "Containers [${containers[*]}] have been stopped and removed."
 }
 
 require curl docker
@@ -129,8 +132,7 @@ for arg; do
 done
 
 if [[ $# == 0 ]]; then
-  warn "at least one image as parameter is required"
-  exit
+  fatal "at least one image as parameter is required"
 fi
 
 images=("$@")
@@ -152,7 +154,7 @@ destroy_network
 
 failures=0
 for ((i = 0; i < ${#images[@]}; i++)); do
-  echo "${images[i]} => ${results[i]}"
+  info "${images[i]} => ${results[i]}"
   if [[ ${results[i]} != success ]]; then
     ((failures++)) || :
   fi
