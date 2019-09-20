@@ -32,9 +32,9 @@ RUN wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonar
 COPY bin /usr/bin/
 
 WORKDIR /usr/src
-RUN chown -R scanner-cli:scanner-cli /usr/src /usr/bin/entrypoint.sh \
+RUN chown -R scanner-cli:scanner-cli /usr/src ${SONAR_SCANNER_HOME} /usr/bin/entrypoint.sh \
     && chmod -R 777 /usr/src \
-    && chmod 755 /usr/bin/entrypoint.sh
+    && chmod -R 755 ${SONAR_SCANNER_HOME} /usr/bin/entrypoint.sh
 USER scanner-cli
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
