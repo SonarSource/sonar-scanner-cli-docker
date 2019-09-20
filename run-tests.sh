@@ -91,7 +91,7 @@ test_scanner() {
   echo "sonar.projectKey=$container_name-test" >> "$scanner_props_location"
   echo "sonar.host.url=http://${sonarqube_container_name}:9000" >> "$scanner_props_location"
 
-  docker run --network="$network" --name="$container_name" --user="$(id -u)" -it -v "$PWD/$container_name/sonarqube-scanner:/usr/src" "$1"
+  docker run --network="$network" --name="$container_name" --user="$(id -u):$(id -g)" -it -v "$PWD/$container_name/sonarqube-scanner:/usr/src" "$1"
   containers+=("$container_name")
   docker wait "$container_name"
   info "Container $container_name stopped."
