@@ -108,7 +108,7 @@ test_scanner() {
 
 launch_sonarqube() {
   info "Starting SonarQube in container $sonarqube_container_name in detached mode..."
-  docker run --network="$network" --name="$sonarqube_container_name" --user="$(id -u)" -d -p $port:9000 sonarqube
+  docker run --network="$network" --name="$sonarqube_container_name" --user="$(id -u)" -p $port:9000 sonarqube
   containers+=("$sonarqube_container_name")
   if wait_for_sonarqube ; then
     info "SonarQube has been started."
