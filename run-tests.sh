@@ -59,7 +59,7 @@ wait_for_sonarqube() {
 
   for ((i = 0; i < 10; i++)); do
     info "waiting for web server to start ..."
-    if curl -sI localhost:$port | grep '^HTTP/.* 200'; then
+    if curl -sI "localhost:$port" | grep '^HTTP/.* 200'; then
       web_up=yes
       break
     fi
@@ -70,7 +70,7 @@ wait_for_sonarqube() {
 
   for ((i = 0; i < 20; i++)); do
     info "waiting for sonarqube to be ready ..."
-    if curl -s localhost:$port/api/system/status | grep '"status":"UP"'; then
+    if curl -s "localhost:$port/api/system/status" | grep '"status":"UP"'; then
       sonarqube_up=yes
       break
     fi
@@ -106,7 +106,7 @@ test_scanner() {
 
 launch_sonarqube() {
   info "Starting SonarQube in container $sonarqube_container_name in detached mode..."
-  docker run --network="$network" --name="$sonarqube_container_name" -d -p $port:9000 sonarqube
+  docker run --network="$network" --name="$sonarqube_container_name" -d -p "$port:9000" sonarqube
   containers+=("$sonarqube_container_name")
   if wait_for_sonarqube ; then
     info "SonarQube has been started."
