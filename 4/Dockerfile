@@ -33,7 +33,7 @@ COPY bin /usr/bin/
 
 WORKDIR /usr/src
 RUN chown -R scanner-cli:scanner-cli /usr/src \
-    && chmod 755 /usr/src
+    && chmod -R 777 /usr/src
 USER scanner-cli
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
