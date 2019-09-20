@@ -1,7 +1,7 @@
 FROM debian:stretch-slim
 
-ARG SONAR_SCANNER_HOME=/usr/local/sonar-scanner
-ARG NODEJS_HOME=/usr/local/nodejs
+ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
+ARG NODEJS_HOME=/opt/nodejs
 ARG UID=1000
 ARG GID=1000
 ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
@@ -18,11 +18,11 @@ RUN apt-get update \
 RUN groupadd --gid ${GID} scanner-cli \
     && useradd --uid ${UID} --gid scanner-cli --shell /bin/bash --create-home scanner-cli
 
-RUN wget -U "scannercli" -q -O /usr/local/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip \
+WORKDIR /opt
+RUN wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip \
     && unzip sonar-scanner-cli.zip \
     && rm sonar-scanner-cli.zip \
     && mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux ${SONAR_SCANNER_HOME} \
-    && chown -R scanner-cli:scanner-cli ${SONAR_SCANNER_HOME} \
     && wget -U "nodejs" -q -O nodejs.tar.xz https://nodejs.org/dist/${NODEJS_VERSION}/node-${NODEJS_VERSION}-linux-x64.tar.xz \
     && tar Jxf nodejs.tar.xz \
     && rm nodejs.tar.xz \
@@ -31,6 +31,7 @@ RUN wget -U "scannercli" -q -O /usr/local/sonar-scanner-cli.zip https://binaries
 
 USER scanner-cli
 COPY bin /usr/bin/
+
 WORKDIR /usr/src
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
