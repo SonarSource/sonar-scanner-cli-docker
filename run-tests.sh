@@ -87,6 +87,7 @@ test_scanner() {
 
   git clone https://github.com/SonarSource/sonar-scanning-examples.git "$container_name"
   echo "pwd: $(pwd)"
+  chmod -R 777 "$(pwd)/$container_name"
 
   scanner_props_location="$(pwd)/$container_name/sonarqube-scanner/sonar-project.properties"
   echo "sonar.projectKey=$container_name-test" >> "$scanner_props_location"
