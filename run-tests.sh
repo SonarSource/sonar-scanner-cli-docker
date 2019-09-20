@@ -86,14 +86,12 @@ test_scanner() {
   info "testing image $1 in container $container_name"
 
   git clone https://github.com/SonarSource/sonar-scanning-examples.git "$container_name"
-#  echo "pwd: $(pwd)"
-#  chmod -R 777 "$(pwd)/$container_name"
 
-  scanner_props_location="$(pwd)/$container_name/sonarqube-scanner/sonar-project.properties"
+  scanner_props_location="$PWD/$container_name/sonarqube-scanner/sonar-project.properties"
   echo "sonar.projectKey=$container_name-test" >> "$scanner_props_location"
   echo "sonar.host.url=http://${sonarqube_container_name}:9000" >> "$scanner_props_location"
 
-  docker run --network="$network" --name="$container_name" --user="$(id -u)" -it -v "$(pwd)/$container_name/sonarqube-scanner:/usr/src" "$1"
+  docker run --network="$network" --name="$container_name" --user="$(id -u)" -it -v "$PWD/$container_name/sonarqube-scanner:/usr/src" "$1"
   containers+=("$container_name")
   docker wait "$container_name"
   info "Container $container_name stopped."
@@ -108,7 +106,7 @@ test_scanner() {
 
 launch_sonarqube() {
   info "Starting SonarQube in container $sonarqube_container_name in detached mode..."
-  docker run --network="$network" --name="$sonarqube_container_name" --user="$(id -u)" -p $port:9000 sonarqube
+  docker run --network="$network" --name="$sonarqube_container_name" -p $port:9000 sonarqube
   containers+=("$sonarqube_container_name")
   if wait_for_sonarqube ; then
     info "SonarQube has been started."
@@ -119,8 +117,8 @@ launch_sonarqube() {
 
 clean_up() {
   info "Stopping and removing containers: [${containers[*]}]"
-  docker stop ${containers[*]}
-  docker rm ${containers[*]}
+  docker stop "${containers[@]}"
+  docker rm "${containers[@]}"
   info "Containers [${containers[*]}] have been stopped and removed."
 }
 
