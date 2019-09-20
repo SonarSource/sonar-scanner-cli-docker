@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 generate_id() {
-  LC_ALL=C tr -dc 'a-z' </dev/urandom | head -c 13 ; echo
+  LC_ALL=C tr -dc 'a-z' </dev/urandom | head -c 13
 }
 
 port=9000
