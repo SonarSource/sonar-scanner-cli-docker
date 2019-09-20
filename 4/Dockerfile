@@ -1,11 +1,9 @@
 FROM debian:stretch-slim
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates git wget unzip xz-utils pylint \
-    && rm -rf /var/lib/apt/lists/*
 
 ARG SONAR_SCANNER_HOME=/usr/local/sonar-scanner
 ARG NODEJS_HOME=/usr/local/nodejs
-
+ARG UID=1000
+ARG GID=1000
 ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
     SONAR_SCANNER_VERSION=4.1.0.1829 \
     NODEJS_HOME=${NODEJS_HOME} \
@@ -13,10 +11,12 @@ ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
     PATH=${SONAR_SCANNER_HOME}/bin:${NODEJS_HOME}/bin:${PATH} \
     NODE_PATH=${NODEJS_HOME}/lib/node_modules
 
-WORKDIR /usr/local
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates git wget unzip xz-utils pylint \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r scanner-cli \
-    && useradd --no-log-init -r -g scanner-cli scanner-cli
+RUN groupadd --gid ${GID} scanner-cli \
+    && useradd --uid ${UID} --gid scanner-cli --shell /bin/bash --create-home scanner-cli
 
 RUN wget -U "scannercli" -q -O /usr/local/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip \
     && unzip sonar-scanner-cli.zip \
