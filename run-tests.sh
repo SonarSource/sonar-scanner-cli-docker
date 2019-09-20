@@ -93,7 +93,7 @@ test_scanner() {
   echo "sonar.projectKey=$container_name-test" >> "$scanner_props_location"
   echo "sonar.host.url=http://${sonarqube_container_name}:9000" >> "$scanner_props_location"
 
-  docker run --network="$network" --name="$container_name" --user="$USER" -it -v "$(pwd)/$container_name/sonarqube-scanner:/usr/src" "$1"
+  docker run --network="$network" --name="$container_name" --user="$(id -u)" -it -v "$(pwd)/$container_name/sonarqube-scanner:/usr/src" "$1"
   containers+=("$container_name")
   docker wait "$container_name"
   info "Container $container_name stopped."
@@ -108,7 +108,7 @@ test_scanner() {
 
 launch_sonarqube() {
   info "Starting SonarQube in container $sonarqube_container_name in detached mode..."
-  docker run --network="$network" --name="$sonarqube_container_name" --user="$USER" -d -p $port:9000 sonarqube
+  docker run --network="$network" --name="$sonarqube_container_name" --user="$(id -u)" -d -p $port:9000 sonarqube
   containers+=("$sonarqube_container_name")
   if wait_for_sonarqube ; then
     info "SonarQube has been started."
