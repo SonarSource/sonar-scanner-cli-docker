@@ -80,8 +80,16 @@ wait_for_sonarqube() {
   [[ "$sonarqube_up" == yes ]]
 }
 
+create_scanner_cache() {
+  local tmpDir="$(mktemp --directory)"
+  scanner_cache="$tmpDir/.sonar"
+  mkdir -p "$scanner_cache"
+  info ".sonar dir created: $scanner_cache"
+}
+
 test_scanner() {
   local scanner_finished_successfuly=no container_name
+  local image="$1"
   container_name=$(generate_id)
   info "testing image $1 in container $container_name"
 
@@ -90,8 +98,9 @@ test_scanner() {
   scanner_props_location="$PWD/$container_name/sonarqube-scanner/sonar-project.properties"
   echo "sonar.projectKey=$container_name-test" >> "$scanner_props_location"
   echo "sonar.host.url=http://${sonarqube_container_name}:9000" >> "$scanner_props_location"
+  echo "sonar.userHome=/usr/.sonar" >> "$scanner_props_location"
 
-  docker run --network="$network" --name="$container_name" --user="$(id -u):$(id -g)" -it -v "$PWD/$container_name/sonarqube-scanner:/usr/src" "$1"
+  docker run --network="$network" --name="$container_name" --user="$(id -u):$(id -g)" -it -v "$PWD/$container_name/sonarqube-scanner:/usr/src" -v "${scanner_cache}:/usr/.sonar" "$image"
   containers+=("$container_name")
   docker wait "$container_name"
   info "Container $container_name stopped."
@@ -99,7 +108,7 @@ test_scanner() {
     scanner_finished_successfuly=yes
   fi
 
-  rm -rf "$container_name"
+  rm -rf "$container_name" && info "Clone $container_name of sample project deleted"
 
   [[ "$scanner_finished_successfuly" == yes ]]
 }
@@ -120,6 +129,7 @@ clean_up() {
   docker stop "${containers[@]}"
   docker rm "${containers[@]}"
   info "Containers [${containers[*]}] have been stopped and removed."
+  rm -Rf "$scanner_cache" && info "Scanner cache $scanner_cache deleted"
 }
 
 require curl docker
@@ -140,6 +150,7 @@ results=()
 
 create_network
 launch_sonarqube
+create_scanner_cache
 
 for image in "${images[@]}"; do
   if test_scanner "$image"; then
