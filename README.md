@@ -15,35 +15,23 @@ Copyright 2015-2019 SonarSource.
 
 Licensed under the [GNU Lesser General Public License, Version 3.0](http://www.gnu.org/licenses/lgpl.txt)
 
-# How to build the Docker image
-
-Each major version of the scanner gets its own image in a specific directory.
-
-Eg. to build sonar-scanner 4.x under the image name `scanner-cli`:
-
-```
-docker build --tag scanner-cli 4
-```
-
 # How to run the Docker image
 
 ## On Linux
 
-### With local SonarQube
+To analyse the project in directory `/path/to/project`, you must first provide the URL to the SonarQube instance by specify it in the project's `sonar-project.properties` with `sonar.host.url=http://foo.acme:9000`.
 
-With a SonarQube (SQ) running on default configuration (`http://localhost:9000`), the following will analyse the project in directory `/path/to/project`:
+You can then run the following command:
 
 ```
-docker run -network=host --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" scanner-cli
+docker run -network=host --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
 To analysis the project in the current directory:
 
 ```
-docker run -network=host --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" scanner-cli
+docker run -network=host --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" sonarsource/sonar-scanner-cli
 ```
-
-If SQ is running on another port, you must specify it in your project's `sonar-project.properties` with `sonar.host.url=http://localhost:9010` and execute the same `docker run` command.
 
 ### Write permissions
 
@@ -51,29 +39,9 @@ The scanner writes to the analysed project directory, in directory `/path/to/pro
 
 The `--user` option (see sample commands above) is used on Linux to have the scanner write with the same user as the one calling the `docker run` command.
 
-### With SonarQube running in Docker
-
-First create a network and boot SonarQube:
-
-```
-docker network create "scanner-sq-network"
-docker run --network="scanner-sq-network" --name="sq" -d sonarqube
-```
-
-Update the `sonar-project.properties` file in the project to analyse to specify the URL of SonarQube with `sonar.host.url=http://sq:9000`.
-
-Finally run the scanner:
-
-```
-# make sure SQ is up and running
-docker run --network="scanner-sq-network" --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
-```
-
 ## On Mac
 
-### With local SonarQube
-
-Specify the SQ URL in the `sonar-project.properties` of the project to be analyzed with as `sonar.host.url=http://host.docker.internal:9000` (`host.docker.internal` should be used instead of `localhost`).
+The command is quite similar to the one for Linux except that you don't need to specify `--user` option.
 
 To analyse the project located in `/path/to/project`, execute:
 
@@ -87,40 +55,19 @@ To analyse the project in the current directory, execute:
 docker run -it -v "$(pwd):/usr/src" sonarsource/sonar-scanner-cli
 ```
 
-### With SonarQube running in Docker
+## `.sonar` directory
 
-First create a network and boot SonarQube:
+The scanner downloads data from the SonarQube server it connects to. Retrieving this data can take time and certainly takes bandwidth. For efficiency, the scanner caches this data in a `.sonar` directory.
 
-```
-docker network create "scanner-sq-network"
-docker run --network="scanner-sq-network" --name="sq" -d sonarqube
-```
+When running the scanner with this image, this `.sonar` directory is created in the project's directory. This implies caching is not happening accross analysis of multiple projects.
 
-Update the `sonar-project.properties` file in the project to analyse to specify the URL of SonarQube with `sonar.host.url=http://sq:9000`.
+Caching is actually shared between projects when running the scanner natively as the `.sonar` is created in the home directory of the current user (eg. `/home/my_user/.sonar`).
 
-Finally run the scanner:
+Here is how you can reproduce this behavior.
 
-```
-# make sure SQ is up and running
-docker run --network="scanner-sq-network" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
-```
+1. specify the new location of the directory in the project's `sonar-project.properties` with `sonar.userHome=/usr/.sonar`
+2. add the following option the `docker run` command: `-v "/home/my_user/.sonar:/usr/.sonar"`
 
-# How to publish the Docker image
+# Developer documentation
 
-The [Travis](https://travis-ci.org/SonarSource/sonar-scanner-cli-docker) job building this repository is publishing every successful build of the master branch to the [SonarSource organization](https://hub.docker.com/r/sonarsource/sonar-scanner-cli) on Docker Hub.
-
-Credentials to Docker Hub are provided as Travis environment variables to the build script (coded directly into [`.travis.yml`](.travis.yml)).
-
-The latest version of the scanner is published under the alias `latest`. Each scanner version is published under at least one version alias (`X`, `X.0`, `X.Y`, ...).
-
-# Automatic tests
-
-The [Travis](https://travis-ci.org/SonarSource/sonar-scanner-cli-docker) job builds the docker image for sonar-scanner 4 and tests it against the demo project `sonarqube-scanner` from SonarSource services maintained repository [`sonar-scanning-examples`](https://github.com/SonarSource/sonar-scanning-examples).
-
-For details, see [run-tests.sh](run-tests.sh).
-
-This test is run on any branch. Test is successful if scanner ran and exited with code 0.
-
-To test another version of the scanner, update the script part of [`.travis.yml`](.travis.yml).
-
-[run-tests.sh](run-tests.sh) can also be used on a developer machine with Docker installed.
+Developer documentation is available in [DEVELOPER.md](DEVELOPER.md).
