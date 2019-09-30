@@ -24,13 +24,13 @@ To analyse the project in directory `/path/to/project`, you must first provide t
 You can then run the following command:
 
 ```
-docker run --network=host --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
+docker run --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
 To analysis the project in the current directory:
 
 ```
-docker run --network=host --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" sonarsource/sonar-scanner-cli
+docker run --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
 ### Write permissions
