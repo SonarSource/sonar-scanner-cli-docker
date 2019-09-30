@@ -17,13 +17,13 @@ docker build --tag scanner-cli 4
 With a SonarQube (SQ) running on default configuration (`http://localhost:9000`), the following will analyse the project in directory `/path/to/project`:
 
 ```
-docker run -network=host --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
+docker run --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
 To analysis the project in the current directory:
 
 ```
-docker run -network=host --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" sonarsource/sonar-scanner-cli
+docker run --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
 If SQ is running on another port, you must specify it in your project's `sonar-project.properties` with `sonar.host.url=http://localhost:9010` and execute the same `docker run` command.
