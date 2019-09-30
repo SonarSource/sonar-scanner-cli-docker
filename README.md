@@ -19,25 +19,23 @@ Licensed under the [GNU Lesser General Public License, Version 3.0](http://www.g
 
 ## On Linux
 
-To analyse the project in directory `/path/to/project`, you must first provide the URL to the SonarQube instance by specify it in the project's `sonar-project.properties` with `sonar.host.url=http://foo.acme:9000`.
-
 You can then run the following command:
 
 ```
-docker run --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
+docker run -e SONAR_HOST_URL=http://foo.acme:9000 --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
 To analysis the project in the current directory:
 
 ```
-docker run --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" sonarsource/sonar-scanner-cli
+docker run -e SONAR_HOST_URL=http://foo.acme:9000 --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
 ### Write permissions
 
-The scanner writes to the analysed project directory, in directory `/path/to/project/.scannerwork`.
+The scanner writes to the analysed project's directory, in directory `${SONAR_PROJECT_BASE_DIR}/.scannerwork`.
 
-The `--user` option (see sample commands above) is used on Linux to have the scanner write with the same user as the one calling the `docker run` command.
+By default scanner writes with user id `1000` and group id `1000`. The `--user` option (see sample commands above) is used on Linux to have the scanner write with the same user and group as the caller to the `docker run` command.
 
 ## On Mac
 
@@ -46,27 +44,46 @@ The command is quite similar to the one for Linux except that you don't need to 
 To analyse the project located in `/path/to/project`, execute:
 
 ```
-docker run -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
+docker run -e SONAR_HOST_URL=http://foo.acme:9000 -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
 To analyse the project in the current directory, execute:
 
 ```
-docker run -it -v "$(pwd):/usr/src" sonarsource/sonar-scanner-cli
+docker run -e SONAR_HOST_URL=http://foo.acme:9000 -it -v "$(pwd):/usr/src" sonarsource/sonar-scanner-cli
 ```
 
-## `.sonar` directory
+## Supported environment variables
 
-The scanner downloads data from the SonarQube server it connects to. Retrieving this data can take time and certainly takes bandwidth. For efficiency, the scanner caches this data in a `.sonar` directory.
+### SonarQube host and authentication
 
-When running the scanner with this image, this `.sonar` directory is created in the project's directory. This implies caching is not happening accross analysis of multiple projects.
+* `SONAR_HOST_URL`: URL to the SonarQube instance the scanner should connect to (default=`http://localhost:9000`)
+* `SONAR_TOKEN`: the prefered way to authenticate to SonarQube is to use a token. Use this environment variable to pass it to the scanner
+* `SONAR_LOGIN` and `SONAR_PASSWORD`: alternatively, you can provide the SonarQube username and password for the scanner to use using these two variables
+
+### Project mounting point
+
+By default, the scanner analyses the project in directory `/usr/src`.
+
+If you can't mount the project into this directory (eg. in Gitlab CI), use `SONAR_PROJECT_BASE_DIR` to specify another location in the container.
+
+```
+-e SONAR_PROJECT_BASE_DIR=/build
+```
+
+### Scanner user home
+
+The scanner downloads data from the SonarQube server it connects to. Retrieving this data can take time and certainly takes bandwidth. For efficiency, the scanner caches this data in the user home (directory named `.sonar`).
+
+When running the scanner with this image, this `.sonar` directory is created in the project's directory (see `SONAR_PROJECT_BASE_DIR`). This implies caching is not happening accross analysis of multiple projects.
 
 Caching is actually shared between projects when running the scanner natively as the `.sonar` is created in the home directory of the current user (eg. `/home/my_user/.sonar`).
 
-Here is how you can reproduce this behavior.
+You can reproduce this behavior, by adding the following to the `docker run` command:
 
-1. specify the new location of the directory in the project's `sonar-project.properties` with `sonar.userHome=/usr/.sonar`
-2. add the following option the `docker run` command: `-v "/home/my_user/.sonar:/usr/.sonar"`
+```
+-e SONAR_USER_HOME=/usr/.sonar -v "/home/my_user/.sonar:/usr/.sonar"
+```
 
 # Developer documentation
 
