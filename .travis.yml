@@ -7,7 +7,7 @@ services:
 
 env:
   global:
-    - SCANNER_VERSION="4.1"
+    - SCANNER_VERSION="4.2"
 
 script:
   - docker build "4"
