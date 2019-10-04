@@ -5,7 +5,7 @@ set -euo pipefail
 declare -a args
 
 add_env_var_as_env_prop() {
-  if [ ! -z "$1" ]; then
+  if [ "$1" ]; then
     args+=("-D$2=$1")
   fi
 }
@@ -13,7 +13,13 @@ add_env_var_as_env_prop() {
 add_env_var_as_env_prop "${SONAR_LOGIN:-}" "sonar.login"
 add_env_var_as_env_prop "${SONAR_PASSWORD:-}" "sonar.password"
 add_env_var_as_env_prop "${SONAR_USER_HOME:-}" "sonar.userHome"
+add_env_var_as_env_prop "${SONAR_PROJECT_BASE_DIR:-}" "sonar.projectBaseDir"
 
-export SONAR_USER_HOME="$PWD/.sonar"
+PROJECT_BASE_DIR="$PWD"
+if [ "${SONAR_PROJECT_BASE_DIR:-}" ]; then
+  PROJECT_BASE_DIR="${SONAR_PROJECT_BASE_DIR}"
+fi
 
+export SONAR_USER_HOME="$PROJECT_BASE_DIR/.sonar"
 sonar-scanner "${args[@]}"
+
