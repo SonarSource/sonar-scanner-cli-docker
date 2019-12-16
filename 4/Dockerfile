@@ -36,3 +36,5 @@ WORKDIR /usr/src
 USER scanner-cli
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
+
+CMD ["sonar-scanner"]
