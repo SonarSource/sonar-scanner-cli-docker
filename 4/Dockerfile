@@ -1,38 +1,28 @@
-FROM debian:stretch-slim
+ARG NODEJS_VERSION=10.18.0
+FROM node:${NODEJS_VERSION}-stretch-slim
 
+ARG SONAR_SCANNER_VERSION=4.2.0.1873
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
-ARG NODEJS_HOME=/opt/nodejs
-ARG UID=1000
-ARG GID=1000
 ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
-    SONAR_SCANNER_VERSION=4.2.0.1873 \
-    NODEJS_HOME=${NODEJS_HOME} \
-    NODEJS_VERSION=v10.16.3 \
-    PATH=${SONAR_SCANNER_HOME}/bin:${NODEJS_HOME}/bin:${PATH} \
-    NODE_PATH=${NODEJS_HOME}/lib/node_modules
+    SONAR_SCANNER_VERSION=${SONAR_SCANNER_VERSION} \
+    PATH=${SONAR_SCANNER_HOME}/bin:${PATH}
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates git wget unzip xz-utils pylint \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends ca-certificates git unzip xz-utils pylint \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g typescript@3.7.4
 
-RUN groupadd --gid ${GID} scanner-cli \
-    && useradd --uid ${UID} --gid scanner-cli --shell /bin/bash --create-home scanner-cli
+ADD https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip /opt/sonar-scanner-cli.zip
 
 WORKDIR /opt
-RUN wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip \
-    && unzip sonar-scanner-cli.zip \
+RUN unzip sonar-scanner-cli.zip \
     && rm sonar-scanner-cli.zip \
-    && mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux ${SONAR_SCANNER_HOME} \
-    && wget -U "nodejs" -q -O nodejs.tar.xz https://nodejs.org/dist/${NODEJS_VERSION}/node-${NODEJS_VERSION}-linux-x64.tar.xz \
-    && tar Jxf nodejs.tar.xz \
-    && rm nodejs.tar.xz \
-    && mv node-${NODEJS_VERSION}-linux-x64 ${NODEJS_HOME} \
-    && npm install -g typescript@3.6.3
+    && mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux ${SONAR_SCANNER_HOME}
 
-COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
+COPY bin /usr/bin/
 
 WORKDIR /usr/src
 
-USER scanner-cli
+USER node
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
