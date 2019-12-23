@@ -8,7 +8,7 @@ ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
     PATH=${SONAR_SCANNER_HOME}/bin:${PATH}
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates git unzip xz-utils pylint \
+    && apt-get install -y --no-install-recommends ca-certificates git unzip pylint \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g typescript@3.7.4
 
