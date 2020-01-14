@@ -45,4 +45,4 @@ WORKDIR /usr/src
 USER ${SONAR_SCANNER_USER}
 
 ENTRYPOINT ["/opt/sonar-scanner/bin/sonar-scanner"]
-CMD ["-Dsonar.projectBaseDir=/usr/src","$@"]
+CMD ["-Dsonar.projectBaseDir=/usr/src"]
