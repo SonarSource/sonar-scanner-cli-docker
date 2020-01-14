@@ -1,38 +1,48 @@
-FROM debian:stretch-slim
+ARG NODEJS_VERSION=13.6.0
 
-ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
-ARG NODEJS_HOME=/opt/nodejs
-ARG UID=1000
-ARG GID=1000
-ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
-    SONAR_SCANNER_VERSION=4.2.0.1873 \
-    NODEJS_HOME=${NODEJS_HOME} \
-    NODEJS_VERSION=v10.16.3 \
-    PATH=${SONAR_SCANNER_HOME}/bin:${NODEJS_HOME}/bin:${PATH} \
-    NODE_PATH=${NODEJS_HOME}/lib/node_modules
+FROM alpine:3.11
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates git wget unzip xz-utils pylint \
-    && rm -rf /var/lib/apt/lists/*
+ARG SONAR_SCANNER_VERSION=4.2.0.1873
+ARG SONAR_SOURCE_KEY=F1182E81C792928921DBCAB4CFCA4A29D26468DE
+ARG SONAR_SCANNER_FILE=sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+ARG JDK_VERSION=11
 
-RUN groupadd --gid ${GID} scanner-cli \
-    && useradd --uid ${UID} --gid scanner-cli --shell /bin/bash --create-home scanner-cli
+ENV SONAR_SCANNER_VERSION=${SONAR_SCANNER_VERSION}
+ENV SONAR_SCANNER_FILE=${SONAR_SCANNER_FILE}
+ENV SONAR_SOURCE_KEY=${SONAR_SOURCE_KEY}
+ENV JDK_VERSION=${JDK_VERSION}
+ENV SONAR_SCANNER_USER=scanner-cli
+ENV SONAR_SCANNER_ID=1001
+ENV SONAR_SCANNER_HOME=/opt/sonar-scanner
+ENV PATH=$PATH:${SONAR_SCANNER_HOME}/bin
 
 WORKDIR /opt
-RUN wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip \
-    && unzip sonar-scanner-cli.zip \
-    && rm sonar-scanner-cli.zip \
-    && mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux ${SONAR_SCANNER_HOME} \
-    && wget -U "nodejs" -q -O nodejs.tar.xz https://nodejs.org/dist/${NODEJS_VERSION}/node-${NODEJS_VERSION}-linux-x64.tar.xz \
-    && tar Jxf nodejs.tar.xz \
-    && rm nodejs.tar.xz \
-    && mv node-${NODEJS_VERSION}-linux-x64 ${NODEJS_HOME} \
-    && npm install -g typescript@3.6.3
 
-COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
+ADD https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/${SONAR_SCANNER_FILE} /opt/sonar-scanner-cli.zip
+ADD https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/${SONAR_SCANNER_FILE}.asc /opt/sonar-scanner-cli.zip.asc
+
+RUN apk update \
+    && apk upgrade \
+    && apk --update add bash p7zip ca-certificates gnupg openjdk${JDK_VERSION}-jre-headless nodejs npm \
+    && addgroup -g ${SONAR_SCANNER_ID} ${SONAR_SCANNER_USER} \
+    && adduser -D -u ${SONAR_SCANNER_ID} -g "" -G ${SONAR_SCANNER_USER} ${SONAR_SCANNER_USER} \
+    && wget "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${SONAR_SOURCE_KEY}" -O ${SONAR_SOURCE_KEY}.key \
+    && gpg --import ${SONAR_SOURCE_KEY}.key \
+    && gpg --no-default-keyring --verify sonar-scanner-cli.zip.asc || exit 1 \
+    && 7z x sonar-scanner-cli.zip \
+    && mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux ${SONAR_SCANNER_HOME} \
+    && chown ${SONAR_SCANNER_USER}:${SONAR_SCANNER_USER} -R ${SONAR_SCANNER_HOME} \
+    && rm -rf /opt/sonar-scanner/jre \
+    && mkdir -p /usr/src /opt/sonar-scanner/jre/bin \
+    && ln -s /usr/bin/java /opt/sonar-scanner/jre/bin/java \
+    && chown ${SONAR_SCANNER_USER}:${SONAR_SCANNER_USER} -R /usr/src \
+    && npm cache clean --force\
+    && apk del p7zip ca-certificates gnupg npm wget \
+    && rm -rf *.zip /var/cache/apk/
 
 WORKDIR /usr/src
 
-USER scanner-cli
+USER ${SONAR_SCANNER_USER}
 
-ENTRYPOINT ["/usr/bin/entrypoint.sh"]
+ENTRYPOINT ["/opt/sonar-scanner/bin/sonar-scanner"]
+CMD ["-Dsonar.projectBaseDir=/usr/src","$@"]
