@@ -2,7 +2,8 @@
 
 # SonarScanner CLI
 
-This is the Git repository that contains source for [SonarScanner CLI](https://github.com/SonarSource/sonar-scanner-cli) Docker images.
+This is the Git repository that contains source for [SonarScanner CLI](https://github.com/SonarSource/sonar-scanner-cli)
+Docker images.
 Images are available on [Docker Hub](https://hub.docker.com/r/sonarsource/sonar-scanner-cli).
 
 NB: These Docker images are not compatible with C/C++/Objective-C projects.
@@ -43,9 +44,12 @@ docker run --user="$(id -u):$(id -g)" -it -v "$(PWD):/usr/src" sonarsource/sonar
 
 ### Write permissions
 
-The scanner writes to the analysed project's directory, in directory `${SONAR_PROJECT_BASE_DIR}/.scannerwork`.
+The scanner writes to the analysed project's directory,
+in directory `${SONAR_PROJECT_BASE_DIR}/.scannerwork`.
 
-By default scanner writes with user id `1001` and group id `1001`. The `--user` option (see sample commands above) is used on Linux to have the scanner write with the same user and group as the caller to the `docker run` command.
+By default scanner writes with user id `1001` and group id `1001`. The `--user`
+option (see sample commands above) is used on Linux to have the scanner write
+with the same user and group as the caller to the `docker run` command.
 
 ## Suported variables
 
@@ -73,11 +77,9 @@ By default, the scanner analyses the project in directory `/usr/src`.
 
 ### Scanner user home
 
-The scanner downloads data from the SonarQube server it connects to. Retrieving this data can take time and certainly takes bandwidth. For efficiency, the scanner caches this data in the user home (directory named `.sonar`).
-
-When running the scanner with this image, this `.sonar` directory is created in the project's directory. This implies caching is not happening accross analysis of multiple projects.
-
-Caching is actually shared between projects when running the scanner natively as the `.sonar` is created in the home directory of the current user.
+When running the scanner with this image, this `.sonar` directory is created in
+the project's directory. This implies caching is not happening accross analysis
+of multiple projects.
 
 # Developer documentation
 
