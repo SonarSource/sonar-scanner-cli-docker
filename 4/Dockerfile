@@ -12,7 +12,7 @@ ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
     NODE_PATH=${NODEJS_HOME}/lib/node_modules
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates git wget unzip xz-utils pylint \
+    && apt-get install -y --no-install-recommends ca-certificates git wget unzip xz-utils pylint shellcheck \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid ${GID} scanner-cli \
