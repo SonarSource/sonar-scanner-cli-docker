@@ -21,7 +21,7 @@ ADD https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/${SONAR_SCAN
 
 RUN apk update \
     && apk upgrade \
-    && apk --update add bash p7zip ca-certificates gnupg openjdk${JDK_VERSION}-jre-headless nodejs npm \
+    && apk --no-cache --update add bash p7zip ca-certificates gnupg openjdk${JDK_VERSION}-jre-headless nodejs npm \
     && addgroup -g ${SONAR_SCANNER_ID} ${SONAR_SCANNER_USER} \
     && adduser -D -u ${SONAR_SCANNER_ID} -g "" -G ${SONAR_SCANNER_USER} ${SONAR_SCANNER_USER} \
     && wget "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${SONAR_SOURCE_KEY}" -O ${SONAR_SOURCE_KEY}.key \
@@ -36,7 +36,7 @@ RUN apk update \
     && chown ${SONAR_SCANNER_USER}:${SONAR_SCANNER_USER} -R /usr/src \
     && npm cache clean --force\
     && apk del p7zip ca-certificates gnupg npm wget \
-    && rm -rf *.zip /var/cache/apk/
+    && rm -rf "./*.zip" /var/cache/apk/
 
 WORKDIR /usr/src
 
