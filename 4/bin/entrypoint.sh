@@ -1,25 +1,18 @@
 #!/bin/bash
 
-set -euo pipefail
+args=()
 
-declare -a args
+for ENV_NAME in $(compgen -e); do
+    SONAR_CHECK=${ENV_NAME%%_*}
+    if [ "$SONAR_CHECK" == "SONAR" ]; then
+      NAME=${ENV_NAME#*_}
+      NAME=`echo $NAME | sed -e 's/\(.*\)/\L\1/' | sed -e 's/\(_[a-z]\)/\U\1/' | sed -e 's/_//'`
+      args+=("-Dsonar.$NAME=${!ENV_NAME}")
+    fi
 
-add_env_var_as_env_prop() {
-  if [ "$1" ]; then
-    args+=("-D$2=$1")
-  fi
-}
+    if [ "$ENV_NAME" == "DEBUG_SONAR" ]; then
+      args+=("-X")
+    fi
+done
 
-add_env_var_as_env_prop "${SONAR_LOGIN:-}" "sonar.login"
-add_env_var_as_env_prop "${SONAR_PASSWORD:-}" "sonar.password"
-add_env_var_as_env_prop "${SONAR_USER_HOME:-}" "sonar.userHome"
-add_env_var_as_env_prop "${SONAR_PROJECT_BASE_DIR:-}" "sonar.projectBaseDir"
-
-PROJECT_BASE_DIR="$PWD"
-if [ "${SONAR_PROJECT_BASE_DIR:-}" ]; then
-  PROJECT_BASE_DIR="${SONAR_PROJECT_BASE_DIR}"
-fi
-
-export SONAR_USER_HOME="$PROJECT_BASE_DIR/.sonar"
 sonar-scanner "${args[@]}"
-
