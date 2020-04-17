@@ -14,7 +14,7 @@ This image is currently in Beta testing and is made available to gather feedback
 Have Question or Feedback?
 --------------------------
 
-For support questions ("How do I?", "I got this error, why?", ...), please first read the [documentation](https://docs.sonarqube.org) and then head to the [SonarSource forum](https://community.sonarsource.com/). There are chances that a question similar to yours has already been answered. 
+For support questions ("How do I?", "I got this error, why?", ...), please first read the [documentation](https://docs.sonarqube.org) and then head to the [SonarSource forum](https://community.sonarsource.com/). There are chances that a question similar to yours has already been answered.
 
 Be aware that this forum is a community, so the standard pleasantries ("Hi", "Thanks", ...) are expected. And if you don't get an answer to your thread, you should sit on your hands for at least three days before bumping it. Operators are not standing by. :-)
 
@@ -79,6 +79,11 @@ docker run -e SONAR_HOST_URL=http://foo.acme:9000 -it -v "$(pwd):/usr/src" sonar
 * `SONAR_HOST_URL`: URL to the SonarQube instance the scanner should connect to (default=`http://localhost:9000`)
 * `SONAR_TOKEN`: the prefered way to authenticate to SonarQube is to use a token. Use this environment variable to pass it to the scanner
 * `SONAR_LOGIN` and `SONAR_PASSWORD`: alternatively, you can provide the SonarQube username and password for the scanner to use using these two variables
+
+### Project configuration
+
+* `SONAR_PROJECT_KEY`: The project's unique key
+* `SONAR_PROJECT_NAME`: Name of the project that will be displayed on the web interface
 
 ### Project mounting point
 

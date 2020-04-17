@@ -12,6 +12,8 @@ add_env_var_as_env_prop() {
 
 add_env_var_as_env_prop "${SONAR_LOGIN:-}" "sonar.login"
 add_env_var_as_env_prop "${SONAR_PASSWORD:-}" "sonar.password"
+add_env_var_as_env_prop "${SONAR_PROJECT_KEY:-}" "sonar.projectKey"
+add_env_var_as_env_prop "${SONAR_PROJECT_NAME:-}" "sonar.projectName"
 add_env_var_as_env_prop "${SONAR_USER_HOME:-}" "sonar.userHome"
 add_env_var_as_env_prop "${SONAR_PROJECT_BASE_DIR:-}" "sonar.projectBaseDir"
 
@@ -22,4 +24,3 @@ fi
 
 export SONAR_USER_HOME="$PROJECT_BASE_DIR/.sonar"
 sonar-scanner "${args[@]}"
-
