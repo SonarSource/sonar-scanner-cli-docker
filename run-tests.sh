@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 generate_id() {
-  LC_ALL=C tr -dc 'a-z' </dev/urandom | head -c 13
+  LC_ALL=C tr -dc 'a-z' </dev/urandom | head -c 13 2>/dev/null
 }
 
 port=9000
@@ -81,7 +81,8 @@ wait_for_sonarqube() {
 }
 
 create_scanner_cache() {
-  local tmpDir="$(mktemp --directory)"
+  local tmpDir=""
+  tmpDir="$(mktemp --directory)"
   scanner_cache="$tmpDir/.sonar"
   mkdir -p "$scanner_cache"
   info ".sonar dir created: $scanner_cache"
@@ -90,30 +91,25 @@ create_scanner_cache() {
 test_scanner() {
   local scanner_finished_successfuly=no container_name
   local image="$1"
-  local args=""
   container_name=$(generate_id)
   info "testing image $1 in container $container_name"
 
-  git clone https://github.com/SonarSource/sonar-scanning-examples.git "$container_name"
-
-  scanner_props_location="$PWD/$container_name/sonarqube-scanner/sonar-project.properties"
+  scanner_props_location="$PWD/target_repository/sonarqube-scanner/sonar-project.properties"
   echo "sonar.projectKey=$container_name-test" >> "$scanner_props_location"
   
   docker run --network="$network" \
      --name="$container_name" \
      --user="$(id -u):$(id -g)" \
-     -it \
-     -v "$PWD/$container_name/sonarqube-scanner:/usr/src" -v "${scanner_cache}:/usr/.sonar" \
-     --env SONAR_HOST_URL="http://${sonarqube_container_name}:9000" --env SONAR_USER_HOME="/usr/.sonar" \
+     -v "$PWD/target_repository/sonarqube-scanner:/usr/src" -v "${scanner_cache}:/usr/.sonar" \
+     --env SONAR_HOST_URL="http://${sonarqube_container_name}:9000" \
+     --env SONAR_USER_HOME="/usr/.sonar" \
       "$image"
   containers+=("$container_name")
   docker wait "$container_name"
   info "Container $container_name stopped."
-  if docker logs "$container_name" | grep -q 'INFO: EXECUTION SUCCESS'; then
+  if docker logs "$container_name" | grep 'INFO: EXECUTION SUCCESS'; then
     scanner_finished_successfuly=yes
   fi
-
-  rm -rf "$container_name" && info "Clone $container_name of sample project deleted"
 
   [[ "$scanner_finished_successfuly" == yes ]]
 }

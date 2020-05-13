@@ -1,0 +1,38 @@
+name: QA
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build_and_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [4]
+        include:
+          - version: 4
+            tag: 4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: SonarSource/sonar-scanning-examples
+          path: target_repository
+      - name: Build image
+        run: docker build "${{ matrix.version }}" --tag "sonar-scanner-cli:${{ matrix.tag }}"
+      - name: Test image
+        run: ./run-tests.sh "sonar-scanner-cli:${{ matrix.tag }}"
+      - name: Run Snyk Monitor
+        if: github.event_name != 'pull_request'
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{secrets.SNYK_TOKEN}}
+        with:
+          command: monitor
+          image: sonar-scanner-cli:${{ matrix.tag }}
+          args: --project-name=docker-sonar-scanner-cli:${{ matrix.tag }} --file=${{ matrix.version }}/Dockerfile
+
+
