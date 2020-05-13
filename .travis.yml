@@ -14,6 +14,7 @@ script:
       --tag "sonar-scanner-cli:$SCANNER_VERSION"
       --tag "sonarsource/sonar-scanner-cli:$SCANNER_VERSION"
       --tag "sonarsource/sonar-scanner-cli:latest"
+  - git clone https://github.com/SonarSource/sonar-scanning-examples.git target_repository
   - ./run-tests.sh "sonar-scanner-cli:$SCANNER_VERSION"
 
 deploy:
