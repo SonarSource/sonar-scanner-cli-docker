@@ -23,7 +23,7 @@ fi
 export SONAR_USER_HOME="$PROJECT_BASE_DIR/.sonar"
 
 if [ "${1#-}" != "${1}" ] || [ -z "$(command -v "${1}")" ]; then
-  set -- sonar-scanner "${args[@]}"
+  set -- sonar-scanner "${args[@]}" $*
 fi
 
 exec "$@"
