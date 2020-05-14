@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  pull_request:
 
 jobs:
   build_and_test:
@@ -35,4 +36,30 @@ jobs:
           image: sonar-scanner-cli:${{ matrix.tag }}
           args: --project-name=docker-sonar-scanner-cli:${{ matrix.tag }} --file=${{ matrix.version }}/Dockerfile
 
+  snyk_on_pr:
+    if: github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [4]
+        include:
+          - version: 4
+            tag: 4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: SonarSource/sonar-scanning-examples
+          path: target_repository
+      - name: Build image
+        run: docker build "${{ matrix.version }}" --tag "sonar-scanner-cli:${{ matrix.tag }}"
+      - name: Run Snyk test
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{secrets.SNYK_TOKEN}}
+        with:
+          command: test
+          image: sonar-scanner-cli:${{ matrix.tag }}
+          args: --project-name=docker-sonar-scanner-cli:${{ matrix.tag }} --file=${{ matrix.version }}/Dockerfile  --fail-on=all
 
