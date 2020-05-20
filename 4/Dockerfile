@@ -44,12 +44,16 @@ ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
 ARG NODEJS_HOME=/opt/nodejs
 ARG UID=1000
 ARG GID=1000
-ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
+ENV HOME=/tmp \
+    XDG_CONFIG_HOME=/tmp \
+    SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
+    SONAR_USER_HOME=${SONAR_SCANNER_HOME}/.sonar \
     SONAR_SCANNER_VERSION=4.4.0.2170 \
     NODEJS_HOME=${NODEJS_HOME} \
     NODEJS_VERSION=v10.19.0 \
     PATH=${SONAR_SCANNER_HOME}/bin:${NODEJS_HOME}/bin:${PATH} \
-    NODE_PATH=${NODEJS_HOME}/lib/node_modules
+    NODE_PATH=${NODEJS_HOME}/lib/node_modules \
+    SRC_PATH=/usr/src
 
 RUN set -ex \
     && addgroup -S -g ${GID} scanner-cli \
@@ -73,9 +77,7 @@ RUN set -ex \
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
-WORKDIR /usr/src
-
-USER scanner-cli
+WORKDIR ${SRC_PATH}
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
 
