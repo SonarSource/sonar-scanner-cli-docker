@@ -49,13 +49,15 @@ ENV SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
     NODEJS_HOME=${NODEJS_HOME} \
     NODEJS_VERSION=v10.19.0 \
     PATH=${SONAR_SCANNER_HOME}/bin:${NODEJS_HOME}/bin:${PATH} \
-    NODE_PATH=${NODEJS_HOME}/lib/node_modules
+    NODE_PATH=${NODEJS_HOME}/lib/node_modules \
+    SRC_PATH="/usr/src" \
+    SONAR_USER_HOME="/sonar"
 
 RUN set -ex \
     && addgroup -S -g ${GID} scanner-cli \
     && adduser -S -D -u ${UID} -G scanner-cli scanner-cli \
     && apk add --no-cache --virtual build-dependencies wget unzip \
-    && apk add --no-cache git python3 bash shellcheck \
+    && apk add --no-cache git python3 bash shellcheck su-exec \
     && wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip \
     && cd /opt \
     && unzip sonar-scanner-cli.zip \
@@ -66,13 +68,15 @@ RUN set -ex \
     && rm nodejs.tar.xz \
     && mv node-${NODEJS_VERSION}-linux-x64 ${NODEJS_HOME} \
     && npm install -g typescript@3.6.3 \
-    && apk del --purge build-dependencies
+    && apk del --purge build-dependencies \
+    && mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" \
+    && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SONAR_USER_HOME}" \
+    # this 777 will be replaced by 700 at runtime (allows semi-arbitrary "--user" values)
+    && chmod -R 777 "${SRC_PATH}" "${SONAR_USER_HOME}"
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
 WORKDIR /usr/src
-
-USER scanner-cli
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
 
