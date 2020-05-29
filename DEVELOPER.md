@@ -20,7 +20,7 @@ With a SonarQube (SQ) running on default configuration (`http://localhost:9000`)
 docker run --user="$(id -u):$(id -g)" -it -v "/path/to/project:/usr/src" sonarsource/sonar-scanner-cli
 ```
 
-To analysis the project in the current directory:
+To analyse the project in the current directory:
 
 ```
 docker run --user="$(id -u):$(id -g)" -it -v "$PWD:/usr/src" sonarsource/sonar-scanner-cli
