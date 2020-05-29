@@ -94,7 +94,7 @@ If you can't mount the project into this directory (eg. in Gitlab CI), use `SONA
 
 The scanner downloads data from the SonarQube server it connects to. Retrieving this data can take time and certainly takes bandwidth. For efficiency, the scanner caches this data in the user home (directory named `.sonar`).
 
-When running the scanner with this image, this `.sonar` directory is created in the project's directory (see `SONAR_PROJECT_BASE_DIR`). This implies caching is not happening accross analysis of multiple projects.
+When running the scanner with this image, this `.sonar` directory is created in the project's directory (see `SONAR_PROJECT_BASE_DIR`). This implies caching is not happening across analysis of multiple projects.
 
 Caching is actually shared between projects when running the scanner natively as the `.sonar` is created in the home directory of the current user (eg. `/home/my_user/.sonar`).
 
