@@ -1,0 +1,19 @@
+name: "QA"
+
+on:
+  pull_request:
+    branches: 
+    - master
+    paths:
+    - '**/Dockerfile'
+
+jobs:
+  4:
+    name: Dockerfile-Linting
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Pull HaDoLint image
+      run: docker pull hadolint/hadolint
+    - name: Lint Dockerfile
+      run: docker run --rm --interactive hadolint/hadolint < ./4/Dockerfile
