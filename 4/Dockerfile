@@ -7,6 +7,9 @@ ENV JAVA_VERSION="jdk-11.0.6+10" \
 #
 # glibc setup
 #
+
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+
 RUN set -eux; \
     apk add --no-cache --virtual .build-deps curl binutils; \
     GLIBC_VER="2.31-r0"; \
@@ -43,6 +46,11 @@ RUN set -eux; \
 #
 # AdoptOpenJDK/openjdk11 setup
 #
+
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+
+WORKDIR /opt/java/openjdk
+
 RUN set -eux; \
     apk add --no-cache --virtual .fetch-deps curl; \
     ARCH="$(apk --print-arch)"; \
@@ -70,8 +78,6 @@ RUN set -eux; \
     esac; \
     curl -LfsSo /tmp/openjdk.tar.gz ${BINARY_URL}; \
     echo "${ESUM} */tmp/openjdk.tar.gz" | sha256sum -c -; \
-    mkdir -p /opt/java/openjdk; \
-    cd /opt/java/openjdk; \
     tar -xf /tmp/openjdk.tar.gz --strip-components=1; \
     apk del --purge .fetch-deps; \
     rm -rf /var/cache/apk/*; \
@@ -93,13 +99,14 @@ ENV JAVA_HOME=/opt/java/openjdk \
     NODE_PATH=${NODEJS_HOME}/lib/node_modules \
     SRC_PATH=/usr/src
 
+WORKDIR /opt
+
 RUN set -ex \
     && addgroup -S -g ${GID} scanner-cli \
     && adduser -S -D -u ${UID} -G scanner-cli scanner-cli \
     && apk add --no-cache --virtual build-dependencies wget unzip \
     && apk add --no-cache git python3 bash shellcheck \
     && wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip \
-    && cd /opt \
     && unzip sonar-scanner-cli.zip \
     && rm sonar-scanner-cli.zip \
     && mv sonar-scanner-${SONAR_SCANNER_VERSION} ${SONAR_SCANNER_HOME} \
