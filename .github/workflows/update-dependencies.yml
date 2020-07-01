@@ -1,0 +1,24 @@
+name: Update image dependencies
+
+on:
+  schedule:
+    - cron: '0 14 * * *'
+
+jobs:
+  update-image-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: 4.4
+      - uses: actions/checkout@v2
+        with:
+          repository: SonarSource/sonar-scanning-examples
+          path: target_repository
+      - name: Build image
+        run: docker build "4" --tag "sonarsource/sonar-scanner-cli:4.4" --tag "sonarsource/sonar-scanner-cli:4" --tag "sonarsource/sonar-scanner-cli:latest"
+      - name: Test image
+        run: ./run-tests.sh "sonarsource/sonar-scanner-cli:4.4"
+      - name: Push image
+        run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD && docker push sonarsource/sonar-scanner-cli
+
