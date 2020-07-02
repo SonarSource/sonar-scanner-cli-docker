@@ -2,7 +2,7 @@ name: Update image dependencies
 
 on:
   schedule:
-    - cron: '0 14 * * *'
+    - cron: '30 8 * * *'
 
 jobs:
   update-image-dependencies:
@@ -20,5 +20,5 @@ jobs:
       - name: Test image
         run: ./run-tests.sh "sonarsource/sonar-scanner-cli:4.4"
       - name: Push image
-        run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD && docker push sonarsource/sonar-scanner-cli
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} && docker push sonarsource/sonar-scanner-cli
 
