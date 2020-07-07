@@ -108,6 +108,8 @@ RUN set -ex \
     && rm nodejs.tar.xz \
     && mv node-${NODEJS_VERSION}-linux-x64 ${NODEJS_HOME} \
     && npm install -g typescript@3.7.5 \
+    && pip3 install --upgrade pip \
+    && pip install pylint \
     && apk del --purge build-dependencies \
     && mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache"\
     && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" \
