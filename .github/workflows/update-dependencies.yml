@@ -2,7 +2,7 @@ name: Update image dependencies
 
 on:
   schedule:
-    - cron: '30 8 * * *'
+    - cron: '30 12 * * *'
 
 jobs:
   update-image-dependencies:
