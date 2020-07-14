@@ -130,7 +130,7 @@ RUN set -ex \
     && gpg --keyserver pool.sks-keyservers.net --recv-keys B9E2F5981AA6E0CD28160D9FF13993A75599653C \
     && gpg --verify SHASUMS256.txt.sig SHASUMS256.txt \
     && grep node-${NODEJS_VERSION}-linux-x64.tar.xz SHASUMS256.txt | sha256sum -c - \
-    && tar Jxf node-${NODEJS_VERSION}-linux-x64.tar.xz \
+    && tar Jxf node-${NODEJS_VERSION}-linux-x64.tar.xz --no-same-owner \
     && rm node-${NODEJS_VERSION}-linux-x64.tar.xz SHASUMS256.txt SHASUMS256.txt.sig /tmp/.gnupg/pubring.kbx /tmp/.gnupg/trustdb.gpg \
     && mv node-${NODEJS_VERSION}-linux-x64 ${NODEJS_HOME} \
     && npm install -g typescript@3.7.5 \
