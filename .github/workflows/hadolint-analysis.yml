@@ -1,4 +1,4 @@
-name: "QA"
+name: "linter"
 
 on:
   pull_request:
@@ -16,4 +16,4 @@ jobs:
     - name: Pull HaDoLint image
       run: docker pull hadolint/hadolint
     - name: Lint Dockerfile
-      run: docker run --rm --interactive hadolint/hadolint hadolint --ignore DL3008 - < ./4/Dockerfile
+      run: docker run --rm --interactive hadolint/hadolint hadolint --ignore DL3018 --ignore DL4001 - < ./4/Dockerfile
