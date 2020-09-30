@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  release:
+    types:
+    - published
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: Start release process
+    steps:
+    - name: Get the version
+      id: get_version
+      run: |
+        IFS=. read major minor micro build <<<"${{ github.event.release.tag_name }}"
+        echo ::set-output name=cli_version::${{ github.event.release.tag_name }}
+        echo ::set-output name=major_version::"${major}"
+        echo ::set-output name=version::"${major}.${minor}"
+      shell: bash
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ GITHUB_REF }}
+    - uses: actions/checkout@v2
+      with:
+        repository: SonarSource/sonar-scanning-examples
+        path: target_repository
+    - name: Build image
+      run: |
+        docker build "${{ steps.get_version.outputs.major_version }}" \
+          --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
+          --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }}" \
+          --build-arg SONAR_SCANNER_VERSION=${{ steps.get_version.outputs.cli_version }}
+    - name: Test image
+      run: ./run-tests.sh "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }}"
+    - name: Push image
+      run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} && docker push sonarsource/sonar-scanner-cli
+    - name: Notify success on Slack
+      uses: Ilshidur/action-slack@2.0.0
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      with:
+        args: "Release successful for {{ GITHUB_REPOSITORY }} by {{ GITHUB_ACTOR }}"
+    - name: Notify failures on Slack
+      uses: Ilshidur/action-slack@2.0.0
+      if: failure()
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      with:
+        args: "Release failed, see the logs at https://github.com/{{ GITHUB_REPOSITORY }}/actions by {{ GITHUB_ACTOR }}"
