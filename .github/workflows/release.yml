@@ -30,11 +30,16 @@ jobs:
         docker build "${{ steps.get_version.outputs.major_version }}" \
           --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
           --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }}" \
+          --tag "sonarsource/sonar-scanner-cli:latest" \
           --build-arg SONAR_SCANNER_VERSION=${{ steps.get_version.outputs.cli_version }}
     - name: Test image
       run: ./run-tests.sh "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }}"
     - name: Push image
-      run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} && docker push sonarsource/sonar-scanner-cli
+      run: |
+        docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} && \
+        docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }} && \
+        docker psuh sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }} && \
+        docker push sonarsource/sonar-scanner-cli:latest
     - name: Notify success on Slack
       uses: Ilshidur/action-slack@2.0.0
       env:
