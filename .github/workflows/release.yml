@@ -38,7 +38,7 @@ jobs:
       run: |
         docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} && \
         docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }} && \
-        docker psuh sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }} && \
+        docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }} && \
         docker push sonarsource/sonar-scanner-cli:latest
     - name: Notify success on Slack
       uses: Ilshidur/action-slack@2.0.0
