@@ -20,7 +20,7 @@ jobs:
       shell: bash
     - uses: actions/checkout@v2
       with:
-        ref: ${{ GITHUB_REF }}
+        ref: ${{ github.event.release.tag_name }}
     - uses: actions/checkout@v2
       with:
         repository: SonarSource/sonar-scanning-examples
