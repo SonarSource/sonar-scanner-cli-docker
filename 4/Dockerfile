@@ -84,6 +84,7 @@ RUN set -eux; \
     rm -rf /tmp/openjdk.tar.gz;
 
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
+ARG SONAR_SCANNER_VERSION=4.5.0.2216
 ARG NODEJS_HOME=/opt/nodejs
 ARG UID=1000
 ARG GID=1000
@@ -92,7 +93,6 @@ ENV JAVA_HOME=/opt/java/openjdk \
     XDG_CONFIG_HOME=/tmp \
     SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
     SONAR_USER_HOME=${SONAR_SCANNER_HOME}/.sonar \
-    SONAR_SCANNER_VERSION=4.5.0.2216 \
     NODEJS_HOME=${NODEJS_HOME} \
     NODEJS_VERSION=v12.18.2 \
     PATH=/opt/java/openjdk/bin:${SONAR_SCANNER_HOME}/bin:${NODEJS_HOME}/bin:${PATH} \
