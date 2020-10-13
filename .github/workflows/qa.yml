@@ -28,7 +28,7 @@ jobs:
         run: |
           docker build "${{ matrix.version }}" \
             --tag "sonar-scanner-cli:${{ matrix.tag }}" \
-            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.name }}
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
       - name: Test image
         run: ./run-tests.sh "sonar-scanner-cli:${{ matrix.tag }}"
       - name: Run Snyk Monitor
@@ -63,7 +63,7 @@ jobs:
         run: |
           docker build "${{ matrix.version }}" \
             --tag "sonar-scanner-cli:${{ matrix.tag }}" \
-            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.name }}
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
       - name: Run Snyk test
         uses: snyk/actions/docker@master
         env:

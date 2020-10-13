@@ -19,7 +19,7 @@ jobs:
         run: |
           docker build "4" \
             --tag "sonar-scanner-cli:latest" \
-            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.name }}
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
       - name: Test image
         run: ./run-tests.sh "sonarsource/sonar-scanner-cli:latest"
       - name: Push image
