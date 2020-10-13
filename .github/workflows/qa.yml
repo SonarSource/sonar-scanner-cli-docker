@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: thebritican/fetch-latest-release@v2
+      - uses: thebritican/fetch-latest-release@v2.0.0
         id: latest_release
       - uses: actions/checkout@v2
         with:
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: thebritican/fetch-latest-release@v2
+      - uses: thebritican/fetch-latest-release@v2.0.0
         id: latest_release
       - uses: actions/checkout@v2
         with:
