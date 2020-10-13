@@ -18,12 +18,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: thebritican/fetch-latest-release@v2
+        id: latest_release
       - uses: actions/checkout@v2
         with:
           repository: SonarSource/sonar-scanning-examples
           path: target_repository
       - name: Build image
-        run: docker build "${{ matrix.version }}" --tag "sonar-scanner-cli:${{ matrix.tag }}"
+        run: |
+          docker build "${{ matrix.version }}" \
+            --tag "sonar-scanner-cli:${{ matrix.tag }}" \
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.name }}
       - name: Test image
         run: ./run-tests.sh "sonar-scanner-cli:${{ matrix.tag }}"
       - name: Run Snyk Monitor
@@ -48,12 +53,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: thebritican/fetch-latest-release@v2
+        id: latest_release
       - uses: actions/checkout@v2
         with:
           repository: SonarSource/sonar-scanning-examples
           path: target_repository
       - name: Build image
-        run: docker build "${{ matrix.version }}" --tag "sonar-scanner-cli:${{ matrix.tag }}"
+        run: |
+          docker build "${{ matrix.version }}" \
+            --tag "sonar-scanner-cli:${{ matrix.tag }}" \
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.name }}
       - name: Run Snyk test
         uses: snyk/actions/docker@master
         env:
