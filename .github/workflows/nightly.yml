@@ -9,12 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: thebritican/fetch-latest-release@v2.0.0
+        id: latest_release
       - uses: actions/checkout@v2
         with:
           repository: SonarSource/sonar-scanning-examples
           path: target_repository
       - name: Build image
-        run: docker build "4" --tag "sonarsource/sonar-scanner-cli:latest"
+        run: |
+          docker build "4" \
+            --tag "sonar-scanner-cli:latest" \
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
       - name: Test image
         run: ./run-tests.sh "sonarsource/sonar-scanner-cli:latest"
       - name: Push image
