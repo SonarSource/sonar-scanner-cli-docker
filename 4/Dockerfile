@@ -133,8 +133,8 @@ RUN set -ex \
     && rm node-${NODEJS_VERSION}-linux-x64.tar.xz SHASUMS256.txt SHASUMS256.txt.sig /tmp/.gnupg/pubring.kbx /tmp/.gnupg/trustdb.gpg \
     && mv node-${NODEJS_VERSION}-linux-x64 ${NODEJS_HOME} \
     && npm install -g typescript@3.7.5 \
-    && pip3 install --upgrade pip \
-    && pip install pylint \
+    && pip3 install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir pylint \
     && apk del --purge build-dependencies \
     && mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache"\
     && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" \
