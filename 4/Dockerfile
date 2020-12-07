@@ -117,17 +117,16 @@ RUN set -ex \
     && wget -U "nodejs" -q -O node-${NODEJS_VERSION}-linux-x64.tar.xz https://nodejs.org/dist/${NODEJS_VERSION}/node-${NODEJS_VERSION}-linux-x64.tar.xz \
     && wget -U "nodejs" -q -O SHASUMS256.txt https://nodejs.org/dist/${NODEJS_VERSION}/SHASUMS256.txt \
     && wget -U "nodejs" -q -O SHASUMS256.txt.sig https://nodejs.org/dist/${NODEJS_VERSION}/SHASUMS256.txt.sig \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys 4ED778F539E3634C779C87C6D7062848A1AB005C \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys 94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys 71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys 8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys C82FA3AE1CBEDC6BE46B9360C43CEC45C17AB93C \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys A48C2BEE680E841632CD4E44F07496B3EB3C1762 \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys 108F52B48DB57BB0CC439B2997B01419BD92F80A \
-    && gpg --keyserver pool.sks-keyservers.net --recv-keys B9E2F5981AA6E0CD28160D9FF13993A75599653C \
+    && gpg --keyserver keyserver.ubuntu.com --recv-keys DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
+        4ED778F539E3634C779C87C6D7062848A1AB005C \
+        94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
+        71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
+        8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
+        C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
+        C82FA3AE1CBEDC6BE46B9360C43CEC45C17AB93C \
+        A48C2BEE680E841632CD4E44F07496B3EB3C1762 \
+        108F52B48DB57BB0CC439B2997B01419BD92F80A \
+        B9E2F5981AA6E0CD28160D9FF13993A75599653C \
     && gpg --verify SHASUMS256.txt.sig SHASUMS256.txt \
     && grep node-${NODEJS_VERSION}-linux-x64.tar.xz SHASUMS256.txt | sha256sum -c - \
     && tar Jxf node-${NODEJS_VERSION}-linux-x64.tar.xz --no-same-owner \
