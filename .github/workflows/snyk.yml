@@ -19,4 +19,4 @@ jobs:
           json: true
           sarif: false
       - name: Print result json
-        run: echo snyk.json
+        run: cat snyk.json
