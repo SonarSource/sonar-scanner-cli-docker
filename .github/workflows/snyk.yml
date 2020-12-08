@@ -16,6 +16,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: sonarsource/sonar-scanner-cli
-          args: --json=true --sarif=false
+          json: true
+          sarif: false
       - name: Print result json
         run: echo snyk.json
