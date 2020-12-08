@@ -1,7 +1,9 @@
 name: Nightly
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - poc/me/snyk
 
 jobs:
   nightly:
