@@ -96,6 +96,8 @@ test_scanner() {
 
   scanner_props_location="$PWD/target_repository/sonarqube-scanner/sonar-project.properties"
   echo "sonar.projectKey=$container_name-test" >> "$scanner_props_location"
+  echo "sonar.login=admin" >> "$scanner_props_location"
+  echo "sonar.password=admin" >> "$scanner_props_location"
   
   docker run --network="$network" \
      --name="$container_name" \

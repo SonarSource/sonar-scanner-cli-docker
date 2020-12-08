@@ -1,0 +1,87 @@
+name: Rebuild
+
+on:
+  schedule:
+    - cron: '23 3 * * *'
+
+jobs:
+  trivy:
+    name: Check for vulnerabilities
+    runs-on: ubuntu-latest
+    outputs:
+      vulnerable: ${{ steps.triviy-run.outcome == 'failure' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run Trivy vulnerability scanner
+        id: triviy-run
+        uses: aquasecurity/trivy-action@master
+        continue-on-error: true
+        with:
+          image-ref: 'docker.io/sonarsource/sonar-scanner-cli'
+          exit-code: 1
+          ignore-unfixed: true
+  base-image:
+    name: Check for newer base image
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.hash.outputs.changed }}
+    steps:
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+    - name: Pull base image
+      run: docker pull adoptopenjdk/openjdk11:alpine-jre
+    - name: Check base image hash
+      id: hash
+      run: |
+        NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' adoptopenjdk/openjdk11:alpine-jre)
+        OLD_IMAGE_ID=$(gsutil cat gs://github_action-sonar_scanner_cli_docker/adoptopenjdk/openjdk11:alpine-jre.hash)
+        if [[ "$NEW_IMAGE_ID" != "$OLD_IMAGE_ID" ]]; then
+          echo $NEW_IMAGE_ID | gsutil cp - gs://github_action-sonar_scanner_cli_docker/adoptopenjdk/openjdk11:alpine-jre.hash
+          echo "::set-output name=changed::true"
+        else
+          echo "::set-output name=changed::false"
+        fi
+  build:
+    name: Build & Push
+    needs:
+      - trivy
+      - base-image
+    runs-on: ubuntu-latest
+    if: ${{ needs.trivy.outputs.vulnerable == 'true' || needs.base-image.outputs.changed == 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Fetch scanning examples
+        uses: actions/checkout@v2
+        with:
+          repository: SonarSource/sonar-scanning-examples
+          path: target_repository
+      - uses: thebritican/fetch-latest-release@v2.0.0
+        id: latest_release
+      - name: Get the version
+        id: get_version
+        run: |
+          IFS=. read major minor patch build <<<"${{ steps.latest_release.outputs.tag_name }}"
+          echo ::set-output name=major::"${major}"
+          echo ::set-output name=major_minor::"${major}.${minor}"
+      - name: Pull docker image
+        run: docker pull docker.io/sonarsource/sonar-scanner-cli:latest
+      - name: Build an image from Dockerfile
+        run: |
+          docker build "4" \
+            --pull \
+            --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }} \
+            --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} \
+            --tag sonarsource/sonar-scanner-cli:latest \
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }} \
+            -f 4/Dockerfile
+      - name: Test image
+        run: ./run-tests.sh "sonarsource/sonar-scanner-cli:latest"
+      - name: Push image
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push --all-tags sonarsource/sonar-scanner-cli
