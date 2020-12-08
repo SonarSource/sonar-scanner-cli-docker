@@ -17,7 +17,7 @@ jobs:
           image: sonarsource/sonar-scanner-cli
           json: true
           sarif: false
-          args: --file=./4/Dockerfile --fail-on=upgradable
+          args: --file=4/Dockerfile --fail-on=upgradable
       - name: Print result json
         if: ${{ failure() }}
         run: cat snyk.json
