@@ -20,10 +20,10 @@ jobs:
             --tag "sonar-scanner-cli:latest" \
             --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
       - name: Run Snyk to check Docker image for vulnerabilities
-          continue-on-error: true
-          uses: snyk/actions/docker@master
-          env:
-            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          with:
-            image: sonar-scanner-cli
-            args: --file=4/Dockerfile
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: sonar-scanner-cli
+          args: --file=4/Dockerfile
