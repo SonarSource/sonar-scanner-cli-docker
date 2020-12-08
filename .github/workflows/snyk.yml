@@ -15,8 +15,9 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: sonarsource/sonar-scanner-cli:4.1
+          image: sonarsource/sonar-scanner-cli
           json: true
           sarif: false
+          args: --file=./4/Dockerfile --fail-on=upgradable
       - name: Print result json
         run: cat snyk.json
