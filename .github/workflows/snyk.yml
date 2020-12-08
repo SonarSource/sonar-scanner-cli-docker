@@ -1,0 +1,29 @@
+name: Nightly
+
+on:
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: thebritican/fetch-latest-release@v2.0.0
+        id: latest_release
+      - uses: actions/checkout@v2
+        with:
+          repository: SonarSource/sonar-scanning-examples
+          path: target_repository
+      - name: Build image
+        run: |
+          docker build "4" \
+            --tag "sonar-scanner-cli:latest" \
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
+      - name: Run Snyk to check Docker image for vulnerabilities
+          continue-on-error: true
+          uses: snyk/actions/docker@master
+          env:
+            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          with:
+            image: sonar-scanner-cli
+            args: --file=4/Dockerfile
