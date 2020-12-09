@@ -9,9 +9,8 @@ jobs:
   nightly:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
       - uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: 'docker.io/sonarsource/sonar-scanner-cli'
-        exit-code: '1'
-        ignore-unfixed: true
+        with:
+          image-ref: 'docker.io/sonarsource/sonar-scanner-cli'
+          exit-code: '1'
+          ignore-unfixed: true
