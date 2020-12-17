@@ -84,4 +84,6 @@ jobs:
       - name: Push image
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker push --all-tags sonarsource/sonar-scanner-cli
+          docker push sonarsource/sonar-scanner-cli:latest
+          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} 
+          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
