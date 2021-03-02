@@ -75,8 +75,11 @@ jobs:
           docker build "4" \
             --pull \
             --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }} \
+            --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }} \
             --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} \
+            --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} \
             --tag sonarsource/sonar-scanner-cli:latest \
+            --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest \
             --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }} \
             -f 4/Dockerfile
       - name: Test image
@@ -87,3 +90,7 @@ jobs:
           docker push sonarsource/sonar-scanner-cli:latest
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} 
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
+          docker login repox-sonarsource-docker-releases.jfrog.io -u private-deployer -p ${{ secrets.ARTIFACTORY_API_KEY }} && \
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}

@@ -29,8 +29,11 @@ jobs:
       run: |
         docker build "${{ steps.get_version.outputs.major_version }}" \
           --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
+          --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
           --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }}" \
+          --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }}" \
           --tag "sonarsource/sonar-scanner-cli:latest" \
+          --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest" \
           --build-arg SONAR_SCANNER_VERSION=${{ steps.get_version.outputs.cli_version }}
     - name: Test image
       run: ./run-tests.sh "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }}"
@@ -40,6 +43,10 @@ jobs:
         docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }} && \
         docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }} && \
         docker push sonarsource/sonar-scanner-cli:latest
+        docker login repox-sonarsource-docker-releases.jfrog.io -u private-deployer -p ${{ secrets.ARTIFACTORY_API_KEY }} && \
+        docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }} && \
+        docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.version }} && \
+        docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
     - name: Notify success on Slack
       uses: Ilshidur/action-slack@2.0.0
       env:
