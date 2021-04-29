@@ -90,7 +90,7 @@ jobs:
           docker push sonarsource/sonar-scanner-cli:latest
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} 
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
-          echo ${{ secrets.DOCKER_REPOX_PASSWORD}} | docker login repox-sonarsource-docker-releases.jfrog.io --username ${{ secrets.DOCKER_REPOX_USERNAME }} --password-stdin
+          echo ${{ secrets.ARTIFACTORY_DOCKER_API_KEY}} | docker login repox-sonarsource-docker-releases.jfrog.io --username docker-deployer --password-stdin
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
