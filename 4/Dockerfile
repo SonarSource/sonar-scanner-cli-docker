@@ -9,8 +9,7 @@ ENV JAVA_HOME=/opt/java/openjdk \
     XDG_CONFIG_HOME=/tmp \
     SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
     SONAR_USER_HOME=${SONAR_SCANNER_HOME}/.sonar \
-    PATH=/opt/java/openjdk/bin:${SONAR_SCANNER_HOME}/bin:${NODEJS_HOME}/bin:${PATH} \
-    NODE_PATH=${NODEJS_HOME}/lib/node_modules \
+    PATH=/opt/java/openjdk/bin:${SONAR_SCANNER_HOME}/bin:${PATH} \
     SRC_PATH=/usr/src
 
 WORKDIR /opt
