@@ -19,7 +19,7 @@ RUN set -ex \
     && addgroup -S -g ${GID} scanner-cli \
     && adduser -S -D -u ${UID} -G scanner-cli scanner-cli \
     && apk add --no-cache --virtual build-dependencies wget unzip gnupg \
-    && apk add --no-cache git python3 py-pip bash shellcheck 'nodejs>10' 'npm>10' \
+    && apk add --no-cache git python3 py-pip bash shellcheck 'nodejs>10' 'npm>7' \
     && wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip \
     && wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip.asc https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip.asc \
     && wget -U "scannercli" -q -O /opt/sonarsource-public.key https://binaries.sonarsource.com/sonarsource-public.key \
