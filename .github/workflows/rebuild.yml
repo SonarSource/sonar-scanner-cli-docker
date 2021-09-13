@@ -33,14 +33,14 @@ jobs:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
     - name: Pull base image
-      run: docker pull adoptopenjdk/openjdk11:alpine-jre
+      run: docker pull alpine:3.14
     - name: Check base image hash
       id: hash
       run: |
-        NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' adoptopenjdk/openjdk11:alpine-jre)
-        OLD_IMAGE_ID=$(gsutil cat gs://github_action-sonar_scanner_cli_docker/adoptopenjdk/openjdk11:alpine-jre.hash)
+        NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' alpine:3.14)
+        OLD_IMAGE_ID=$(gsutil cat gs://github_action-sonar_scanner_cli_docker/alpine:3.14.hash)
         if [[ "$NEW_IMAGE_ID" != "$OLD_IMAGE_ID" ]]; then
-          echo $NEW_IMAGE_ID | gsutil cp - gs://github_action-sonar_scanner_cli_docker/adoptopenjdk/openjdk11:alpine-jre.hash
+          echo $NEW_IMAGE_ID | gsutil cp - gs://github_action-sonar_scanner_cli_docker/alpine:3.14.hash
           echo "::set-output name=changed::true"
         else
           echo "::set-output name=changed::false"
