@@ -33,7 +33,6 @@ RUN set -eux; \
     unzip sonar-scanner-cli.zip; \
     rm sonar-scanner-cli.zip sonar-scanner-cli.zip.asc; \
     mv sonar-scanner-${SONAR_SCANNER_VERSION} ${SONAR_SCANNER_HOME}; \
-    npm install -g typescript@3.7.5; \
     pip install --no-cache-dir --upgrade pip; \
     pip install --no-cache-dir pylint; \
     apk del --purge build-dependencies; \
