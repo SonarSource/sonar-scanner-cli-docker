@@ -38,7 +38,7 @@ jobs:
       id: hash
       run: |
         NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' alpine:3.14)
-        OLD_IMAGE_ID=$(gsutil cat gs://github_action-sonar_scanner_cli_docker/alpine:3.14.hash)
+        OLD_IMAGE_ID=$(gsutil cat gs://github_action-sonar_scanner_cli_docker/alpine:3.14.hash || echo "Hash not found")
         if [[ "$NEW_IMAGE_ID" != "$OLD_IMAGE_ID" ]]; then
           echo $NEW_IMAGE_ID | gsutil cp - gs://github_action-sonar_scanner_cli_docker/alpine:3.14.hash
           echo "::set-output name=changed::true"
