@@ -4,7 +4,7 @@ ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
 ARG SONAR_SCANNER_VERSION
 ARG UID=1000
 ARG GID=1000
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk \
+ENV JAVA_HOME=/usr/lib/jvm/default-jvm \
     HOME=/tmp \
     XDG_CONFIG_HOME=/tmp \
     SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
@@ -21,7 +21,7 @@ RUN set -eux; \
     addgroup -S -g ${GID} scanner-cli; \
     adduser -S -D -u ${UID} -G scanner-cli scanner-cli; \
     apk add --no-cache --virtual build-dependencies wget unzip gnupg; \
-    apk add --no-cache git python3 py-pip bash shellcheck 'nodejs>12' 'npm>7' openjdk11-jre curl musl-locales musl-locales-lang; \
+    apk add --no-cache git python3 py-pip bash shellcheck 'nodejs>12' 'npm>7' openjdk17-jre curl musl-locales musl-locales-lang; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip.asc https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip.asc; \
     for server in $(shuf -e ha.pool.sks-keyservers.net \
