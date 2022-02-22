@@ -44,6 +44,8 @@ RUN set -eux; \
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
+VOLUME [ "/tmp/cacerts" ]
+
 WORKDIR ${SRC_PATH}
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
