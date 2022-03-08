@@ -53,13 +53,13 @@ jobs:
         docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }} && \
         docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
     - name: Notify success on Slack
-      uses: Ilshidur/action-slack@2.0.0
+      uses: Ilshidur/action-slack@2.1.0
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       with:
         args: "Release successful for {{ GITHUB_REPOSITORY }} by {{ GITHUB_ACTOR }}"
     - name: Notify failures on Slack
-      uses: Ilshidur/action-slack@2.0.0
+      uses: Ilshidur/action-slack@2.1.0
       if: failure()
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
