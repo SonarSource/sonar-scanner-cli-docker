@@ -68,6 +68,7 @@ jobs:
           IFS=. read major minor patch build <<<"${{ steps.latest_release.outputs.tag_name }}"
           echo ::set-output name=major::"${major}"
           echo ::set-output name=major_minor::"${major}.${minor}"
+          echo ::set-output name=major_minor_patch::"${major}.${minor}.${patch}"
       - name: Pull docker image
         run: docker pull docker.io/sonarsource/sonar-scanner-cli:latest
       - name: Build an image from Dockerfile
@@ -78,6 +79,8 @@ jobs:
             --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }} \
             --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} \
             --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} \
+            --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }} \
+            --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }} \
             --tag sonarsource/sonar-scanner-cli:latest \
             --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest \
             --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }} \
@@ -88,9 +91,11 @@ jobs:
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push sonarsource/sonar-scanner-cli:latest
+          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} 
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
           echo ${{ secrets.ARTIFACTORY_DOCKER_API_KEY}} | docker login repox-sonarsource-docker-releases.jfrog.io --username docker-deployer --password-stdin
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
