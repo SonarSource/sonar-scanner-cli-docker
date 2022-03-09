@@ -24,12 +24,9 @@ RUN set -eux; \
     apk add --no-cache git python3 py-pip bash shellcheck 'nodejs>12' 'npm>7' openjdk11-jre curl musl-locales musl-locales-lang; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip.asc https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip.asc; \
-    for server in $(shuf -e ha.pool.sks-keyservers.net \
-                        hkp://p80.pool.sks-keyservers.net:80 \
-                        keyserver.ubuntu.com \
-                        hkp://keyserver.ubuntu.com:80 \
-                        pgp.mit.edu) ; do \
-    gpg --batch --keyserver "${server}" --recv-keys 679F1EE92B19609DE816FDE81DB198F93525EC1A && break || : ; \
+    for server in $(shuf -e hkps://keys.openpgp.org \
+                            hkps://keyserver.ubuntu.com) ; do \
+        gpg --batch --keyserver "${server}" --recv-keys 679F1EE92B19609DE816FDE81DB198F93525EC1A && break || : ; \
     done; \
     gpg --verify /opt/sonar-scanner-cli.zip.asc /opt/sonar-scanner-cli.zip; \
     unzip sonar-scanner-cli.zip; \
