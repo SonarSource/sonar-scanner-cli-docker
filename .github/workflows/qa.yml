@@ -38,3 +38,4 @@ jobs:
           image-ref: sonar-scanner-cli:${{ matrix.tag }}
           exit-code: 1
           ignore-unfixed: true
+
