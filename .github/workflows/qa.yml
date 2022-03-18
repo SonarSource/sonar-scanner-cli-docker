@@ -27,6 +27,7 @@ jobs:
       - name: Build image
         run: |
           docker build "${{ matrix.version }}" \
+            --pull \
             --tag "sonar-scanner-cli:${{ matrix.tag }}" \
             --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
       - name: Test image

@@ -71,8 +71,6 @@ jobs:
           echo ::set-output name=major::"${major}"
           echo ::set-output name=major_minor::"${major}.${minor}"
           echo ::set-output name=major_minor_patch::"${major}.${minor}.${patch}"
-      - name: Pull docker image
-        run: docker pull docker.io/sonarsource/sonar-scanner-cli:latest
       - name: Build an image from Dockerfile
         run: |
           docker build "4" \
