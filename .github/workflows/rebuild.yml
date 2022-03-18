@@ -21,6 +21,7 @@ jobs:
           image-ref: 'docker.io/sonarsource/sonar-scanner-cli'
           exit-code: 1
           ignore-unfixed: true
+
   base-image:
     name: Check for newer base image
     runs-on: ubuntu-latest
@@ -45,6 +46,7 @@ jobs:
         else
           echo "::set-output name=changed::false"
         fi
+
   build:
     name: Build & Push
     needs:
@@ -69,8 +71,6 @@ jobs:
           echo ::set-output name=major::"${major}"
           echo ::set-output name=major_minor::"${major}.${minor}"
           echo ::set-output name=major_minor_patch::"${major}.${minor}.${patch}"
-      - name: Pull docker image
-        run: docker pull docker.io/sonarsource/sonar-scanner-cli:latest
       - name: Build an image from Dockerfile
         run: |
           docker build "4" \
@@ -99,3 +99,10 @@ jobs:
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
+      - name: Notify failures on Slack
+        if: failure()
+        uses: Ilshidur/action-slack@2.0.0
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_SQ_DEVOPS_WEBHOOK }}
+        with:
+          args: "Build and Push for sonar-scanner-cli-docker failed, see the logs at https://github.com/SonarSource/sonar-scanner-cli-docker/actions"
