@@ -75,26 +75,36 @@ jobs:
         run: |
           docker build "4" \
             --pull \
-            --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }} \
-            --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }} \
-            --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} \
-            --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} \
-            --tag sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }} \
-            --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }} \
-            --tag sonarsource/sonar-scanner-cli:latest \
-            --tag repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}" \
+            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}" \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
+            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
+            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
+            --tag "sonarsource/sonar-scanner-cli:latest" \
+            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest" \
             --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }} \
             -f 4/Dockerfile
       - name: Test image
         run: ./run-tests.sh "sonarsource/sonar-scanner-cli:latest"
+      - name: Generate CycloneDX SBOM
+        uses: SonarSource/gh-action_sbom@v1
+        with:
+          image: "sonarsource/sonar-scanner-cli:latest"
+          filename: "sonar-scanner-cli-latest-bom.json"
+          upload-artifact: true
+          upload-release-assets: false
+        env:
+          GPG_PRIVATE_KEY_PASSPHRASE: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
+          GPG_PRIVATE_KEY_BASE64: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
       - name: Push image
         run: |
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin <<< "${{ secrets.DOCKER_PASSWORD }}"
           docker push sonarsource/sonar-scanner-cli:latest
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
-          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }} 
+          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
-          echo ${{ secrets.ARTIFACTORY_DOCKER_API_KEY}} | docker login repox-sonarsource-docker-releases.jfrog.io --username docker-deployer --password-stdin
+          docker login repox-sonarsource-docker-releases.jfrog.io --username docker-deployer --password-stdin <<< "${{ secrets.ARTIFACTORY_DOCKER_API_KEY}}"
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
