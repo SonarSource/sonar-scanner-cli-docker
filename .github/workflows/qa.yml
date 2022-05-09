@@ -39,4 +39,13 @@ jobs:
           image-ref: sonar-scanner-cli:${{ matrix.tag }}
           exit-code: 1
           ignore-unfixed: true
-
+      - name: Generate CycloneDX SBOM
+        uses: SonarSource/gh-action_sbom@v1
+        with:
+          image: "sonar-scanner-cli:${{ matrix.tag }}"
+          filename: "sonar-scanner-cli-${{ matrix.tag }}-bom.json"
+          upload-artifact: true
+          upload-release-assets: false
+        env:
+          GPG_PRIVATE_KEY_PASSPHRASE: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
+          GPG_PRIVATE_KEY_BASE64: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
