@@ -34,14 +34,14 @@ jobs:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
     - name: Pull base image
-      run: docker pull alpine:3.14
+      run: docker pull alpine:3.15
     - name: Check base image hash
       id: hash
       run: |
-        NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' alpine:3.14)
-        OLD_IMAGE_ID=$(gsutil cat gs://github_action-sonar_scanner_cli_docker/alpine:3.14.hash || echo "Hash not found")
+        NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' alpine:3.15)
+        OLD_IMAGE_ID=$(gsutil cat gs://github_action-sonar_scanner_cli_docker/alpine:3.15.hash || echo "Hash not found")
         if [[ "$NEW_IMAGE_ID" != "$OLD_IMAGE_ID" ]]; then
-          echo $NEW_IMAGE_ID | gsutil cp - gs://github_action-sonar_scanner_cli_docker/alpine:3.14.hash
+          echo $NEW_IMAGE_ID | gsutil cp - gs://github_action-sonar_scanner_cli_docker/alpine:3.15.hash
           echo "::set-output name=changed::true"
         else
           echo "::set-output name=changed::false"
