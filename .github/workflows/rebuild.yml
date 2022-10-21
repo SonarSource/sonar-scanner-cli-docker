@@ -43,9 +43,9 @@ jobs:
           NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' alpine:3.15)
           OLD_IMAGE_ID=$(test -f image-hashes/alpine:3.15.hash && cat image-hashes/alpine:3.15.hash || echo "Hash not found")
           if [[ "$NEW_IMAGE_ID" != "$OLD_IMAGE_ID" ]]; then
-            echo "::set-output name=changed::true"
+            echo "changed=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=changed::false"
+            echo "changed=false" >> $GITHUB_OUTPUT
           fi
           echo "${NEW_IMAGE_ID}" > image-hashes/alpine:3.15.hash
 
@@ -83,9 +83,9 @@ jobs:
         id: get_version
         run: |
           IFS=. read major minor patch build <<<"${{ steps.latest_release.outputs.tag_name }}"
-          echo ::set-output name=major::"${major}"
-          echo ::set-output name=major_minor::"${major}.${minor}"
-          echo ::set-output name=major_minor_patch::"${major}.${minor}.${patch}"
+          echo "major=${major}" >> $GITHUB_OUTPUT
+          echo "major_minor=${major}.${minor}" >> $GITHUB_OUTPUT
+          echo "major_minor_patch=${major}.${minor}.${patch}" >> $GITHUB_OUTPUT
       - name: Build an image from Dockerfile
         run: |
           docker build "4" \

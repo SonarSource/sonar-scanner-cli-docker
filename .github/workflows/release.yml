@@ -27,10 +27,10 @@ jobs:
         id: get_version
         run: |
           IFS=. read major minor micro build <<<"${{ github.event.release.tag_name }}"
-          echo ::set-output name=cli_version::${{ github.event.release.tag_name }}
-          echo ::set-output name=major_version::"${major}"
-          echo ::set-output name=major_minor::"${major}.${minor}"
-          echo ::set-output name=major_minor_patch::"${major}.${minor}.${micro}"
+          echo "cli_version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "major_version=${major}" >> $GITHUB_OUTPUT
+          echo "major_minor=${major}.${minor}" >> $GITHUB_OUTPUT
+          echo "major_minor_patch=${major}.${minor}.${micro}" >> $GITHUB_OUTPUT
         shell: bash
       - uses: actions/checkout@v2
         with:
