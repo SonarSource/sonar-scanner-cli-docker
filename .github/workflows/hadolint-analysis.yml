@@ -11,6 +11,8 @@ jobs:
   v4:
     name: Dockerfile-Linting
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v2
     - name: Pull HaDoLint image
