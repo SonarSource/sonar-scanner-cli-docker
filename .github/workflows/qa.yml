@@ -16,7 +16,16 @@ jobs:
           - version: 4
             tag: 4
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - id: secrets
+        uses: SonarSource/vault-action-wrapper@2.4.3-1
+        with:
+          secrets: |
+            development/kv/data/sign key | gpg_key;
+            development/kv/data/sign passphrase | gpg_passphrase;
       - uses: actions/checkout@v2
       - uses: thebritican/fetch-latest-release@v2.0.0
         id: latest_release
@@ -47,5 +56,5 @@ jobs:
           upload-artifact: true
           upload-release-assets: false
         env:
-          GPG_PRIVATE_KEY_PASSPHRASE: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
-          GPG_PRIVATE_KEY_BASE64: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
+          GPG_PRIVATE_KEY_PASSPHRASE: ${{ fromJSON(steps.secrets.outputs.vault).gpg_passphrase }}
+          GPG_PRIVATE_KEY_BASE64: ${{ fromJSON(steps.secrets.outputs.vault).gpg_key }}
