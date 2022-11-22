@@ -3,75 +3,90 @@ name: Release
 on:
   release:
     types:
-    - published
+      - published
 
 jobs:
   release:
     runs-on: ubuntu-latest
     name: Start release process
+    permissions:
+      contents: read
+      id-token: write
     steps:
-    - name: Get the version
-      id: get_version
-      run: |
-        IFS=. read major minor micro build <<<"${{ github.event.release.tag_name }}"
-        echo ::set-output name=cli_version::${{ github.event.release.tag_name }}
-        echo ::set-output name=major_version::"${major}"
-        echo ::set-output name=major_minor::"${major}.${minor}"
-        echo ::set-output name=major_minor_patch::"${major}.${minor}.${micro}"
-      shell: bash
-    - uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.release.tag_name }}
-    - uses: actions/checkout@v2
-      with:
-        repository: SonarSource/sonar-scanning-examples
-        path: target_repository
-    - name: Build image
-      run: |
-        docker build "${{ steps.get_version.outputs.major_version }}" \
-          --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
-          --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
-          --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
-          --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
-          --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
-          --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
-          --tag "sonarsource/sonar-scanner-cli:latest" \
-          --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest" \
-          --build-arg SONAR_SCANNER_VERSION=${{ steps.get_version.outputs.cli_version }}
-    - name: Test image
-      run: ./run-tests.sh "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
-    - name: Generate CycloneDX SBOM
-      uses: SonarSource/gh-action_sbom@v1
-      with:
-        image: "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
-        filename: "sonar-scanner-cli-${{ matrix.tag }}-bom.json"
-        upload-artifact: true
-        upload-release-assets: true
-      env:
-        GPG_PRIVATE_KEY_PASSPHRASE: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
-        GPG_PRIVATE_KEY_BASE64: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
-    - name: Push image
-      run: |
-        docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin <<< "${{ secrets.DOCKER_PASSWORD }}"
-        docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
-        docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
-        docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
-        docker push sonarsource/sonar-scanner-cli:latest
-        docker login repox-sonarsource-docker-releases.jfrog.io --username docker-deployer --password-stdin <<< "${{ secrets.ARTIFACTORY_DOCKER_API_KEY}}"
-        docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
-        docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
-        docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
-        docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
-    - name: Notify success on Slack
-      uses: Ilshidur/action-slack@2.1.0
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-      with:
-        args: "Release successful for {{ GITHUB_REPOSITORY }} by {{ GITHUB_ACTOR }}"
-    - name: Notify failures on Slack
-      uses: Ilshidur/action-slack@2.1.0
-      if: failure()
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-      with:
-        args: "Release failed, see the logs at https://github.com/{{ GITHUB_REPOSITORY }}/actions by {{ GITHUB_ACTOR }}"
+      - id: secrets
+        uses: SonarSource/vault-action-wrapper@2.4.3-1
+        with:
+          secrets: |
+            development/kv/data/sign key | gpg_key;
+            development/kv/data/sign passphrase | gpg_passphrase;
+            development/kv/data/docker/sonardockerrw access_token_rwd | docker_access_token;
+            development/kv/data/docker/sonardockerrw username | docker_username;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release access_token | repox_access_token;
+            development/kv/data/slack webhook | slack_webhook;
+      - name: Get the version
+        id: get_version
+        run: |
+          IFS=. read major minor micro build <<<"${{ github.event.release.tag_name }}"
+          echo ::set-output name=cli_version::${{ github.event.release.tag_name }}
+          echo ::set-output name=major_version::"${major}"
+          echo ::set-output name=major_minor::"${major}.${minor}"
+          echo ::set-output name=major_minor_patch::"${major}.${minor}.${micro}"
+        shell: bash
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/checkout@v2
+        with:
+          repository: SonarSource/sonar-scanning-examples
+          path: target_repository
+      - name: Build image
+        run: |
+          docker build "${{ steps.get_version.outputs.major_version }}" \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
+            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
+            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
+            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
+            --tag "sonarsource/sonar-scanner-cli:latest" \
+            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest" \
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.get_version.outputs.cli_version }}
+      - name: Test image
+        run: ./run-tests.sh "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
+      - name: Generate CycloneDX SBOM
+        uses: SonarSource/gh-action_sbom@v1
+        with:
+          image: "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
+          filename: "sonar-scanner-cli-${{ matrix.tag }}-bom.json"
+          upload-artifact: true
+          upload-release-assets: true
+        env:
+          GPG_PRIVATE_KEY_PASSPHRASE: ${{ fromJSON(steps.secrets.outputs.vault).gpg_passphrase }}
+          GPG_PRIVATE_KEY_BASE64: ${{ fromJSON(steps.secrets.outputs.vault).gpg_key }}
+      - name: Push image
+        run: |
+          docker login --username ${{ fromJSON(steps.secrets.outputs.vault).docker_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).docker_access_token }}"
+          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
+          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
+          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
+          docker push sonarsource/sonar-scanner-cli:latest
+          docker login repox-sonarsource-docker-releases.jfrog.io --username vault-SonarSource-sonar-scanner-cli-docker-docker-release --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}"
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
+      - name: Notify success on Slack
+        uses: Ilshidur/action-slack@2.1.0
+        env:
+          SLACK_CHANNEL: team-sq-devops
+          SLACK_WEBHOOK: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+        with:
+          args: "Release successful for {{ GITHUB_REPOSITORY }} by {{ GITHUB_ACTOR }}"
+      - name: Notify failures on Slack
+        uses: Ilshidur/action-slack@2.1.0
+        if: failure()
+        env:
+          SLACK_CHANNEL: team-sq-devops
+          SLACK_WEBHOOK: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+        with:
+          args: "Release failed, see the logs at https://github.com/{{ GITHUB_REPOSITORY }}/actions by {{ GITHUB_ACTOR }}"
