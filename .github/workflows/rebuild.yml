@@ -27,25 +27,27 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       changed: ${{ steps.hash.outputs.changed }}
+    permissions:
+      actions: write
     steps:
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v0
-      with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        export_default_credentials: true
-    - name: Pull base image
-      run: docker pull alpine:3.15
-    - name: Check base image hash
-      id: hash
-      run: |
-        NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' alpine:3.15)
-        OLD_IMAGE_ID=$(gsutil cat gs://github_action-sonar_scanner_cli_docker/alpine:3.15.hash || echo "Hash not found")
-        if [[ "$NEW_IMAGE_ID" != "$OLD_IMAGE_ID" ]]; then
-          echo $NEW_IMAGE_ID | gsutil cp - gs://github_action-sonar_scanner_cli_docker/alpine:3.15.hash
-          echo "::set-output name=changed::true"
-        else
-          echo "::set-output name=changed::false"
-        fi
+      - uses: actions/cache@v3
+        with:
+          path: image-hashes/
+          key: image-hashes
+      - name: Pull base image
+        run: docker pull alpine:3.15
+      - name: Check base image hash
+        id: hash
+        run: |
+          mkdir -p image-hashes/
+          NEW_IMAGE_ID=$(docker image inspect --format='{{.ID}}' alpine:3.15)
+          OLD_IMAGE_ID=$(test -f image-hashes/alpine:3.15.hash && cat image-hashes/alpine:3.15.hash || echo "Hash not found")
+          if [[ "$NEW_IMAGE_ID" != "$OLD_IMAGE_ID" ]]; then
+            echo "::set-output name=changed::true"
+          else
+            echo "::set-output name=changed::false"
+          fi
+          echo "${NEW_IMAGE_ID}" > image-hashes/alpine:3.15.hash
 
   build:
     name: Build & Push
