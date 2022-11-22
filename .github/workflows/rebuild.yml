@@ -54,7 +54,20 @@ jobs:
       - base-image
     runs-on: ubuntu-latest
     if: ${{ needs.trivy.outputs.vulnerable == 'true' || needs.base-image.outputs.changed == 'true' }}
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - id: secrets
+        uses: SonarSource/vault-action-wrapper@2.4.3-1
+        with:
+          secrets: |
+            development/kv/data/sign key | gpg_key;
+            development/kv/data/sign passphrase | gpg_passphrase;
+            development/kv/data/docker/sonardockerrw access_token_rwd | docker_access_token;
+            development/kv/data/docker/sonardockerrw username | docker_username;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release access_token | repox_access_token;
+            development/kv/data/slack webhook | slack_webhook;
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Fetch scanning examples
@@ -95,16 +108,16 @@ jobs:
           upload-artifact: true
           upload-release-assets: false
         env:
-          GPG_PRIVATE_KEY_PASSPHRASE: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
-          GPG_PRIVATE_KEY_BASE64: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
+          GPG_PRIVATE_KEY_PASSPHRASE: ${{ fromJSON(steps.secrets.outputs.vault).gpg_passphrase }}
+          GPG_PRIVATE_KEY_BASE64: ${{ fromJSON(steps.secrets.outputs.vault).gpg_key }}
       - name: Push image
         run: |
-          docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin <<< "${{ secrets.DOCKER_PASSWORD }}"
+          docker login --username ${{ fromJSON(steps.secrets.outputs.vault).docker_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).docker_access_token }}"
           docker push sonarsource/sonar-scanner-cli:latest
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}
-          docker login repox-sonarsource-docker-releases.jfrog.io --username docker-deployer --password-stdin <<< "${{ secrets.ARTIFACTORY_DOCKER_API_KEY}}"
+          docker login repox-sonarsource-docker-releases.jfrog.io --username vault-SonarSource-sonar-scanner-cli-docker-docker-release --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}"
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
@@ -113,6 +126,7 @@ jobs:
         if: failure()
         uses: Ilshidur/action-slack@2.0.0
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_SQ_DEVOPS_WEBHOOK }}
+          SLACK_CHANNEL: team-sq-devops
+          SLACK_WEBHOOK: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
         with:
           args: "Build and Push for sonar-scanner-cli-docker failed, see the logs at https://github.com/SonarSource/sonar-scanner-cli-docker/actions"
