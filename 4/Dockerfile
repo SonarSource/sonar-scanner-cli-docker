@@ -1,4 +1,4 @@
-FROM alpine:3.15
+FROM alpine:3.17
 
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
 ARG SONAR_SCANNER_VERSION
