@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      actions: write
     steps:
       - id: secrets
         uses: SonarSource/vault-action-wrapper@2.4.3-1
