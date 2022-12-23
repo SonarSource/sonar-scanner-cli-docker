@@ -10,9 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Start release process
     permissions:
-      contents: read
+      contents: write
       id-token: write
-      actions: write
     steps:
       - id: secrets
         uses: SonarSource/vault-action-wrapper@2.4.3-1
