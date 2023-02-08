@@ -49,7 +49,7 @@ jobs:
           exit-code: 1
           ignore-unfixed: true
       - name: Generate CycloneDX SBOM
-        uses: SonarSource/gh-action_sbom@v1
+        uses: SonarSource/gh-action_sbom@master
         with:
           image: "sonar-scanner-cli:${{ matrix.tag }}"
           filename: "sonar-scanner-cli-${{ matrix.tag }}-bom.json"
