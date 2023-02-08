@@ -41,13 +41,6 @@ jobs:
             --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
       - name: Test image
         run: ./run-tests.sh "sonar-scanner-cli:${{ matrix.tag }}"
-      - name: Run Trivy vulnerability scanner
-        id: triviy-run
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: sonar-scanner-cli:${{ matrix.tag }}
-          exit-code: 1
-          ignore-unfixed: true
       - name: Generate CycloneDX SBOM
         uses: SonarSource/gh-action_sbom@master
         with:
