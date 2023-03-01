@@ -1,5 +1,7 @@
 FROM alpine:3.17
 
+LABEL org.opencontainers.image.url=https://github.com/SonarSource/sonar-scanner-cli-docker
+
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
 ARG SONAR_SCANNER_VERSION
 ARG UID=1000
