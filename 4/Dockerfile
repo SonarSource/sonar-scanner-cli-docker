@@ -1,12 +1,10 @@
-FROM alpine:3.17
+FROM eclipse-temurin:17-jre
 
 LABEL org.opencontainers.image.url=https://github.com/SonarSource/sonar-scanner-cli-docker
 
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
 ARG SONAR_SCANNER_VERSION
-ARG UID=1000
-ARG GID=1000
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk \
+ENV JAVA_HOME='/opt/java/openjdk' \
     HOME=/tmp \
     XDG_CONFIG_HOME=/tmp \
     SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
@@ -20,10 +18,10 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk \
 WORKDIR /opt
 
 RUN set -eux; \
-    addgroup -S -g ${GID} scanner-cli; \
-    adduser -S -D -u ${UID} -G scanner-cli scanner-cli; \
-    apk add --no-cache --virtual build-dependencies wget unzip gnupg; \
-    apk add --no-cache git python3 py-pip bash shellcheck 'nodejs>12' openjdk11-jre curl musl-locales musl-locales-lang; \
+    groupadd --system --gid 1000 scanner-cli; \
+    useradd --system --uid 1000 --gid scanner-cli scanner-cli; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends gnupg unzip wget bash fonts-dejavu python3 python3-pip shellcheck nodejs>12 build-essential; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip.asc https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip.asc; \
     for server in $(shuf -e hkps://keys.openpgp.org \
@@ -36,10 +34,10 @@ RUN set -eux; \
     mv sonar-scanner-${SONAR_SCANNER_VERSION} ${SONAR_SCANNER_HOME}; \
     pip install --no-cache-dir --upgrade pip; \
     pip install --no-cache-dir pylint; \
-    apk del --purge build-dependencies; \
     mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache"; \
     chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}"; \
-    chmod -R 777 "${SRC_PATH}" "${SONAR_USER_HOME}";
+    chmod -R 777 "${SRC_PATH}" "${SONAR_USER_HOME}"; \
+    rm -rf /var/lib/apt/lists/*;
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
