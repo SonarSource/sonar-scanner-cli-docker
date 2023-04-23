@@ -22,7 +22,7 @@ RUN set -eux; \
     useradd --system --uid 1000 --gid scanner-cli scanner-cli; \
     curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -; \
     apt-get update; \
-    apt-get install -y --no-install-recommends gnupg unzip wget bash fonts-dejavu python3 python3-pip shellcheck nodejs>14 build-essential; \
+    apt-get install -y --no-install-recommends gnupg unzip wget bash fonts-dejavu python3 python3-pip shellcheck nodejs build-essential; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip.asc https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip.asc; \
     for server in $(shuf -e hkps://keys.openpgp.org \
