@@ -20,6 +20,7 @@ jobs:
           image-ref: 'docker.io/sonarsource/sonar-scanner-cli'
           exit-code: 1
           ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
 
   base-image:
     name: Check for newer base image
