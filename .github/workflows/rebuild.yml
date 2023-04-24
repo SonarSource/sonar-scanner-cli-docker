@@ -1,9 +1,8 @@
 name: Rebuild
 
 on:
-  schedule:
-    - cron: '23 3 * * *'
-
+  workflow_dispatch
+  
 jobs:
   trivy:
     name: Check for vulnerabilities
