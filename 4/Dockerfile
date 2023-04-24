@@ -17,12 +17,11 @@ ENV JAVA_HOME='/opt/java/openjdk' \
 
 WORKDIR /opt
 
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
-RUN groupadd --system --gid 1000 scanner-cli; \
+RUN set -eux; \
+    groupadd --system --gid 1000 scanner-cli; \
     useradd --system --uid 1000 --gid scanner-cli scanner-cli; \
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -; \
     apt-get update; \
-    apt-get install -y --no-install-recommends gnupg unzip wget bash fonts-dejavu python3 python3-pip shellcheck nodejs build-essential; \
+    apt-get install -y --no-install-recommends gnupg unzip wget bash fonts-dejavu python3 python3-pip shellcheck nodejs>12 build-essential; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip.asc https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip.asc; \
     for server in $(shuf -e hkps://keys.openpgp.org \
