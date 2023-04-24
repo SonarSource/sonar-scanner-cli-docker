@@ -15,7 +15,7 @@ if [ -d /tmp/cacerts ]; then
   if [ "$(ls -A /tmp/cacerts)" ]; then
     for f in /tmp/cacerts/*
     do
-      keytool -importcert -file "${f}" -alias "$(basename ${f})" -keystore "${JAVA_HOME}/lib/security/cacerts" -storepass changeit -trustcacerts -noprompt
+      keytool -importcert -file "${f}" -alias "$(basename ${f})" -keystore /usr/lib/jvm/default-jvm/jre/lib/security/cacerts -storepass changeit -trustcacerts -noprompt
     done
   fi
 fi
