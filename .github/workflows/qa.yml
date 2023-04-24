@@ -48,7 +48,6 @@ jobs:
           image-ref: sonar-scanner-cli:${{ matrix.tag }}
           exit-code: 1
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
       - name: Generate CycloneDX SBOM
         uses: SonarSource/gh-action_sbom@v1
         with:
