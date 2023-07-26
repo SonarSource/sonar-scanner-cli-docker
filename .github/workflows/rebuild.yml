@@ -89,7 +89,7 @@ jobs:
           echo "major_minor_patch=${major}.${minor}.${patch}" >> $GITHUB_OUTPUT
       - name: Build an image from Dockerfile
         run: |
-          docker build "4" \
+          docker build "5" \
             --pull \
             --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}" \
             --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major }}" \
@@ -100,7 +100,7 @@ jobs:
             --tag "sonarsource/sonar-scanner-cli:latest" \
             --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest" \
             --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }} \
-            -f 4/Dockerfile
+            -f 5/Dockerfile
       - name: Test image
         run: ./run-tests.sh "sonarsource/sonar-scanner-cli:latest"
       - name: Generate CycloneDX SBOM

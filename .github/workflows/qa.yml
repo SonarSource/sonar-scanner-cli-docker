@@ -11,10 +11,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [4]
+        version: [5]
         include:
-          - version: 4
-            tag: 4
+          - version: 5
+            tag: 5
     runs-on: ubuntu-latest
     permissions:
       contents: read
