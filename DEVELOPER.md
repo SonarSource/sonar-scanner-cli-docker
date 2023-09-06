@@ -84,20 +84,25 @@ docker run -e SONAR_HOST_URL==http://sq:9000 --network="scanner-sq-network" -it 
 
 # How to publish the Docker image
 
-The [Travis](https://travis-ci.org/SonarSource/sonar-scanner-cli-docker) job building this repository is publishing every successful build of the master branch to the [SonarSource organization](https://hub.docker.com/r/sonarsource/sonar-scanner-cli) on Docker Hub.
+## Docker-hub official image release
 
-Credentials to Docker Hub are provided as Travis environment variables to the build script (coded directly into [`.travis.yml`](.travis.yml)).
+Sonar-scanner-cli is now part of docker hub official images, you can find more details on the release doc [here](./RELEASE.md)
 
-The latest version of the scanner is published under the alias `latest`. Each scanner version is published under at least one version alias (`X`, `X.0`, `X.Y`, ...).
+## DEPRECATED release on SonarSource docker hub account
+
+This image was built everyday on master trought the rebuild.yml and pushed to the docker hub SonarSource account [here](https://hub.docker.com/u/sonarsource), this workflow was used to rebuild the image in case a new base image patch was released.
+
+The same workflow was also triggered when a github-release was created. 
+
+We are removing entirely the rebuild workflow, replacing it with sonar-scanner-cli-docker being available as a [docker hub official image](https://docs.docker.com/docker-hub/official_images/). You can find more details on the doc [here](./RELEASE.md)
+
+In the meantime, to allow everyone to use that new repo, we are keeping the release.yml workflow.
 
 # Automatic tests
 
-The [Travis](https://travis-ci.org/SonarSource/sonar-scanner-cli-docker) job builds the docker image for sonar-scanner 4 and tests it against the demo project `sonarqube-scanner` from SonarSource services maintained repository [`sonar-scanning-examples`](https://github.com/SonarSource/sonar-scanning-examples).
+The qa is splited in two files, `hadolint-analysis.yml` and `qa.yml` which does multiple things:
 
-For details, see [run-tests.sh](run-tests.sh).
-
-This test is run on any branch. Test is successful if scanner ran and exited with code 0.
-
-To test another version of the scanner, update the script part of [`.travis.yml`](.travis.yml).
-
-[run-tests.sh](run-tests.sh) can also be used on a developer machine with Docker installed.
+- linting the dockerfile to make sure it comply with best practices
+- build the image.
+- test the image by running a scan on a sample-project.
+- run a trivy scan to find potential vulnerabilities.
