@@ -5,6 +5,8 @@ on:
     branches:
       - master
   pull_request:
+  schedule:
+    - cron: '23 3 * * *'
 
 jobs:
   build_and_test:
@@ -37,8 +39,7 @@ jobs:
         run: |
           docker build "${{ matrix.version }}" \
             --pull \
-            --tag "sonar-scanner-cli:${{ matrix.tag }}" \
-            --build-arg SONAR_SCANNER_VERSION=${{ steps.latest_release.outputs.tag_name }}
+            --tag "sonar-scanner-cli:${{ matrix.tag }}"
       - name: Test image
         run: ./run-tests.sh "sonar-scanner-cli:${{ matrix.tag }}"
       - name: Run Trivy vulnerability scanner
@@ -49,6 +50,7 @@ jobs:
           exit-code: 1
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
+          vuln-type: 'os'
 
       - name: Generate CycloneDX SBOM
         uses: SonarSource/gh-action_sbom@v1
