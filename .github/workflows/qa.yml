@@ -40,8 +40,18 @@ jobs:
           docker build "${{ matrix.version }}" \
             --pull \
             --tag "sonar-scanner-cli:${{ matrix.tag }}"
-      - name: Test image
-        run: ./run-tests.sh "sonar-scanner-cli:${{ matrix.tag }}"
+      # - name: Test image
+      #   run: ./run-tests.sh "sonar-scanner-cli:${{ matrix.tag }}"
+
+      - name: Setup BATS
+        uses: mig4/setup-bats@v1
+        with:
+          bats-version: 1.10.0
+      - name: Test
+        run: bats --print-output-on-failure --show-output-of-passing-tests --verbose-run -xt test
+        env:
+          TEST_IMAGE: "sonar-scanner-cli:${{ matrix.tag }}"
+
       - name: Run Trivy vulnerability scanner
         id: triviy-run
         uses: aquasecurity/trivy-action@master
