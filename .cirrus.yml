@@ -1,0 +1,36 @@
+env:
+  # see https://github.com/SonarSource/re-terraform-aws-vault/blob/master/orders/bubble-cfamily.yaml
+  CIRRUS_VAULT_URL: https://vault.sonar.build:8200
+  CIRRUS_VAULT_AUTH_PATH: jwt-cirrusci
+  CIRRUS_VAULT_ROLE: cirrusci-${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}
+
+  DOCKER_USERNAME: VAULT[development/kv/data/docker/sonardockerrw data.username]
+  DOCKER_PASSWORD: VAULT[development/kv/data/docker/sonardockerrw data.access_token_rwd]
+  
+  STAGING_IMAGE_NAME: sonarsource/sonarqube
+  CURRENT_MAJOR_VERSION: "5"
+  CURRENT_TAG: scanner-5.0.1
+
+vm_instance_template: &VM_TEMPLATE
+  experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
+  image: docker-builder-v*
+  type: t2.small
+  region: eu-central-1
+  subnet_id: ${CIRRUS_AWS_SUBNET}
+  disk: 10
+  cpu: 4
+  memory: 16G
+
+multi_arch_build_task: 
+  ec2_instance:
+    <<: *VM_TEMPLATE
+  login_script:
+    - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+  setup_script:
+    - docker run -t --rm --privileged tonistiigi/binfmt --install all
+    - docker buildx create --name multibuilder
+    - docker buildx use multibuilder
+    - docker buildx inspect --bootstrap
+  build_script:
+    - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting two architectures, linux/amd64 and linux/arm64"
+    - docker buildx build --platform linux/amd64,linux/arm64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push "${CURRENT_MAJOR_VERSION}"
