@@ -21,16 +21,38 @@ vm_instance_template: &VM_TEMPLATE
   cpu: 4
   memory: 16G
 
-multi_arch_build_task: 
-  ec2_instance:
-    <<: *VM_TEMPLATE
+# multi_arch_build_task: 
+#   ec2_instance:
+#     <<: *VM_TEMPLATE
+#   login_script:
+#     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+#   setup_script:
+#     - docker run -t --rm --privileged tonistiigi/binfmt --install all
+#     - docker buildx create --name multibuilder
+#     - docker buildx use multibuilder
+#     - docker buildx inspect --bootstrap
+#   build_script:
+#     - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting two architectures, linux/amd64 and linux/arm64"
+#     - docker buildx build --platform linux/amd64,linux/arm64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push "${CURRENT_MAJOR_VERSION}"
+
+multi_arch_test_docker_builder:
+  matrix:
+    # - env:
+    #     CIRRUS_ARCH: arm64
+    - env:
+        CIRRUS_ARCH: amd64
   login_script:
     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
-  setup_script:
-    - docker run -t --rm --privileged tonistiigi/binfmt --install all
-    - docker buildx create --name multibuilder
-    - docker buildx use multibuilder
-    - docker buildx inspect --bootstrap
-  build_script:
-    - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting two architectures, linux/amd64 and linux/arm64"
-    - docker buildx build --platform linux/amd64,linux/arm64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push "${CURRENT_MAJOR_VERSION}"
+  test_script:
+    - echo "Checking out the sonar-scanning-examples repository"
+    - git clone https://github.com/SonarSource/sonar-scanning-examples.git
+    - echo "Test the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting linux/${CIRRUS_ARCH}"
+    - mkdir -p ${pwd}/target_repository/sonarqube-scanner/
+    - touch /tmp/cirrus-ci-build/target_repository/sonarqube-scanner/sonar-project.properties
+    - ls -la ${pwd}/target_repository/sonarqube-scanner/
+    - pwd
+    - echo "---"
+    - ls
+    - echo "---"
+    - ./run-tests.sh "${STAGING_IMAGE_NAME}:${CURRENT_TAG}"
+  # depends_on: multi_arch_build
