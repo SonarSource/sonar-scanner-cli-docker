@@ -1,12 +1,36 @@
+setup() {
+    export DIR
+    # shellcheck disable=SC2154  # BATS_TEST_FILENAME is set by bats
+    DIR="$( cd "$( dirname "${BATS_TEST_FILENAME}" )" >/dev/null 2>&1 && pwd )"
+
+    docker network create it-sonarqube
+
+    docker run --network=it-sonarqube --name=it-sonarqube -d sonarqube:enterprise
+}
+
+teardown() {
+    docker rm -f it-sonarqube
+    docker network rm it-sonarqube
+}
+
 @test "scan test project" {
+    # shellcheck disable=2312  # The return value is irrelevant
+    until docker run --network=it-sonarqube --rm curlimages/curl:8.2.1 -so - it-sonarqube:9000/api/system/status | grep '"status":"UP"' ; do
+        sleep 5
+    done
+
     local tmpDir=""
     tmpDir="$(mktemp -d)"
     SONAR_SCANNER_CACHE="${tmpDir}/.sonar"
     mkdir -p "${SONAR_SCANNER_CACHE}"
 
-    scanner_tmp_dir=$(mktemp -d)
-    mkdir -p "${scanner_tmp_dir}/target_repository/sonarqube-scanner"
-    scanner_props_location="${scanner_tmp_dir}/target_repository/sonarqube-scanner/sonar-project.properties"
+    # shellcheck disable=SC2154  # DIR is set by setup_suite
+    local REPO_DIR="${DIR}/../target_repository"
+    mkdir -p "${REPO_DIR}"
+    git clone https://github.com/SonarSource/sonar-scanning-examples.git "${REPO_DIR}"
+
+    local PROJECT_SCAN_DIR="${REPO_DIR}/sonarqube-scanner"
+    scanner_props_location="${PROJECT_SCAN_DIR}/sonar-project.properties"
 
     cat <<EOF > "${scanner_props_location}"
     sonar.projectKey=it-sonarqube-test
@@ -14,13 +38,17 @@
     sonar.password=admin
 EOF
 
-    docker run --network=it-sonarqube --rm \
-        --user="$(id -u):$(id -g)" \
-        -v "${scanner_tmp_dir}/target_repository/sonarqube-scanner:/usr/src" \
+    # shellcheck disable=SC2154  # TEST_IMAGE is provided as an environment variable
+    run docker run --network=it-sonarqube --rm \
+        -v "${PROJECT_SCAN_DIR}:/usr/src" \
         -v "${SONAR_SCANNER_CACHE}:/usr/.sonar" \
         --env SONAR_HOST_URL="http://it-sonarqube:9000" \
         --env SONAR_USER_HOME="/usr/.sonar" \
         "${TEST_IMAGE}"
+
+    [[ "${output}" =~ "INFO: EXECUTION SUCCESS" ]]
+
+    rm -rf "${tmpDir}" "${REPO_DIR}"
 }
 
 @test "ensure we have nodejs 18 installed" {
@@ -31,4 +59,19 @@ EOF
 @test "ensure we are using Java 17" {
     run docker run --rm --entrypoint=java "${TEST_IMAGE}" --version
     [[ "${output}" =~ 17\.[0-9]+\.[0-9]+ ]]
+}
+
+@test "ensure we are using the scanner-cli user automatically" {
+    run docker run --rm --entrypoint=id "${TEST_IMAGE}" -un
+    [[ "${output}" =~ scanner-cli ]]
+}
+
+@test "ensure we are using the scanner-cli group automatically" {
+    run docker run --rm --entrypoint=id "${TEST_IMAGE}" -gn
+    [[ "${output}" =~ scanner-cli ]]
+}
+
+@test "ensure we can use the scanner-cli user/group" {
+    run docker run --rm -u "scanner-cli:scanner-cli" --entrypoint=id "${TEST_IMAGE}" -un
+    [[ "${output}" =~ scanner-cli ]]
 }

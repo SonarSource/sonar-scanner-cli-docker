@@ -59,7 +59,6 @@ private_scan_task:
     - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -project ${STAGING_IMAGE_NAME}:${CURRENT_TAG} -wss.url ${WS_WSS_URL} -docker.scanImages true
 depends_on: multi_arch_build
 
-
 public_scan_task: 
   only_if: $CIRRUS_CRON == 'nightly-mend-scan'
   env:
@@ -76,3 +75,18 @@ public_scan_task:
     - echo "Scan the ${PUBLIC_IMAGE_NAME}:${TAG} image"
     - docker pull "${PUBLIC_IMAGE_NAME}:${TAG}"
     - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -project ${PUBLIC_IMAGE_NAME}:${TAG} -wss.url ${WS_WSS_URL} -docker.scanImages true
+
+multi_arch_test_docker_builder:
+  env:
+    matrix:
+      CIRRUS_ARCH: "arm64"
+      CIRRUS_ARCH: "amd64"
+  login_script:
+    - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+  test_script:
+    - apt-get update && apt-get install -qy bats
+    - echo "Checking out the sonar-scanning-examples repository"
+    - git clone https://github.com/SonarSource/sonar-scanning-examples.git target_repository
+    - echo "Test the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting linux/${CIRRUS_ARCH}"
+    - TEST_IMAGE="${STAGING_IMAGE_NAME}:${CURRENT_TAG}" bats --tap test
+  depends_on: multi_arch_build

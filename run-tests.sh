@@ -82,7 +82,7 @@ wait_for_sonarqube() {
 
 create_scanner_cache() {
   local tmpDir=""
-  tmpDir="$(mktemp --directory)"
+  tmpDir="$(mktemp -d)"
   scanner_cache="$tmpDir/.sonar"
   mkdir -p "$scanner_cache"
   info ".sonar dir created: $scanner_cache"
