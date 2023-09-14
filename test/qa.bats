@@ -26,8 +26,6 @@ teardown() {
 
     # shellcheck disable=SC2154  # DIR is set by setup_suite
     local REPO_DIR="${DIR}/../target_repository"
-    mkdir -p "${REPO_DIR}"
-    git clone https://github.com/SonarSource/sonar-scanning-examples.git "${REPO_DIR}"
 
     local PROJECT_SCAN_DIR="${REPO_DIR}/sonarqube-scanner"
     scanner_props_location="${PROJECT_SCAN_DIR}/sonar-project.properties"
