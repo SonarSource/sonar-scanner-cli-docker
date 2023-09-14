@@ -18,7 +18,6 @@ ENV JAVA_HOME=/opt/java/openjdk \
 
 WORKDIR /opt
 
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN groupadd --system --gid 1000 scanner-cli && \
     useradd --system --uid 1000 --gid scanner-cli scanner-cli && \
     apt-get update && \
