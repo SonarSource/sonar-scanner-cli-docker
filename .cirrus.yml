@@ -27,6 +27,14 @@ vm_instance_template: &VM_TEMPLATE
   cpu: 4
   memory: 16G
 
+static_checks_task:
+  ec2_instance:
+    <<: *VM_TEMPLATE
+  login_script:
+    - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+  lint_script:
+    - docker run --rm --interactive hadolint/hadolint hadolint --ignore DL3018 --ignore DL4001 --ignore DL3013 --ignore SC2015 --ignore DL3008 - < ./5/Dockerfile
+
 multi_arch_build_task: 
   ec2_instance:
     <<: *VM_TEMPLATE
@@ -40,6 +48,7 @@ multi_arch_build_task:
   build_script:
     - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting two architectures, linux/amd64 and linux/arm64"
     - docker buildx build --platform linux/amd64,linux/arm64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push "${CURRENT_MAJOR_VERSION}"
+depends_on: static_checks_task
 
 private_scan_task:
   env:
@@ -58,7 +67,6 @@ private_scan_task:
     - docker pull --platform linux/${platform} "${STAGING_IMAGE_NAME}:${CURRENT_TAG}"
     - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -project ${STAGING_IMAGE_NAME}:${CURRENT_TAG} -wss.url ${WS_WSS_URL} -docker.scanImages true
 depends_on: multi_arch_build
-
 
 public_scan_task: 
   only_if: $CIRRUS_CRON == 'nightly-mend-scan'

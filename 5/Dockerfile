@@ -18,6 +18,8 @@ ENV JAVA_HOME=/opt/java/openjdk \
 
 WORKDIR /opt
 
+# The only pipe that is worth worrying about is the curl|gpg one. But if curl fails, gpg will fail too.
+# hadolint ignore=DL4006
 RUN groupadd --system --gid 1000 scanner-cli && \
     useradd --system --uid 1000 --gid scanner-cli scanner-cli && \
     apt-get update && \
