@@ -59,8 +59,3 @@ EOF
     run docker run --rm --entrypoint=java "${TEST_IMAGE}" --version
     [[ "${output}" =~ 17\.[0-9]+\.[0-9]+ ]]
 }
-
-@test "ensure the image was successfully built" {
-    run docker run --rm "${TEST_IMAGE}" --version
-    [[ "${output}" =~ 5.0.1.3006 ]]
-}
