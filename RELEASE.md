@@ -18,11 +18,12 @@ Release of a new version of the official sonar-scanner-cli Docker images is made
 
 Creating a github release will trigger the `release.yml` workflow which will build and push the docker images to the **organisation sonarsource account** on docker hub (see [here](https://hub.docker.com/u/sonarsource)). Which is different from the official image workflow.
 
-This organisation release is now **deprecated**, nonetheless we will keep triggering it until it is properly communicated to the users.
+This organization release is now **deprecated**, nonetheless we will keep triggering it until it is properly communicated to the users.
 
-One can expect this workflow to follow the SonarSource deprecation model, which means we will stop pushing to the organisation account 1 year after the deprecation announcement.
+One can expect this workflow to follow the SonarSource deprecation model, which means we will stop pushing to the organization account 1 year after the deprecation announcement.
 
 ## Tips
+
 Bump the version of sonar-scanner-cli in Dockerfiles
 -----------------------------
 
@@ -56,7 +57,7 @@ To do so you should use your own personal fork
 
 Create a feature branch on the fork:
 * `GitCommit` must be updated to this repository master branch's HEAD.
-* `Tags` and `Directory` must be added/updated appropriatly for each edition
+* `Tags` and `Directory` must be added/updated appropriately for each edition
 * see https://github.com/docker-library/official-images/pull/8837/files as an example
 
 Until sonar-scanner-cli is released and the public artifacts are available, keep your PR a draft PR to make it clear it is not ready to be merged yet.
