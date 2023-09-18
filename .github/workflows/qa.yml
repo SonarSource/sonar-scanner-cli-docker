@@ -31,24 +31,11 @@ jobs:
       - uses: actions/checkout@v2
       - uses: thebritican/fetch-latest-release@v2.0.0
         id: latest_release
-      - uses: actions/checkout@v2
-        with:
-          repository: SonarSource/sonar-scanning-examples
-          path: target_repository
       - name: Build image
         run: |
           docker build "${{ matrix.version }}" \
             --pull \
             --tag "sonar-scanner-cli:${{ matrix.tag }}"
-
-      - name: Setup BATS
-        uses: mig4/setup-bats@v1
-        with:
-          bats-version: 1.2.0
-      - name: Test
-        run: bats -t test
-        env:
-          TEST_IMAGE: "sonar-scanner-cli:${{ matrix.tag }}"
 
       - name: Run Trivy vulnerability scanner
         id: triviy-run

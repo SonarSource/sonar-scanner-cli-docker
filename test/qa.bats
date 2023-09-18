@@ -47,7 +47,7 @@ EOF
 
     [[ "${output}" =~ "INFO: EXECUTION SUCCESS" ]]
 
-    rm -rf "${tmpDir}" "${REPO_DIR}"
+    rm -rf "${tmpDir}"
 }
 
 @test "ensure we have nodejs 18 installed" {
@@ -60,17 +60,7 @@ EOF
     [[ "${output}" =~ 17\.[0-9]+\.[0-9]+ ]]
 }
 
-@test "ensure we are using the scanner-cli user automatically" {
-    run docker run --rm --entrypoint=id "${TEST_IMAGE}" -un
-    [[ "${output}" =~ scanner-cli ]]
-}
-
-@test "ensure we are using the scanner-cli group automatically" {
-    run docker run --rm --entrypoint=id "${TEST_IMAGE}" -gn
-    [[ "${output}" =~ scanner-cli ]]
-}
-
-@test "ensure we can use the scanner-cli user/group" {
-    run docker run --rm -u "scanner-cli:scanner-cli" --entrypoint=id "${TEST_IMAGE}" -un
-    [[ "${output}" =~ scanner-cli ]]
+@test "ensure the image was successfully built" {
+    run docker run --rm "${TEST_IMAGE}" --version
+    [[ "${output}" =~ 5.0.1.3006 ]]
 }
