@@ -22,12 +22,12 @@ SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN groupadd --system --gid 1000 scanner-cli && \
     useradd --system --uid 1000 --gid scanner-cli scanner-cli && \
     apt-get -qqy update && \
-    apt-get -qqy --no-install-recommends install ca-certificates curl gnupg  && \
+    apt-get --no-install-recommends -qqy install ca-certificates curl gnupg  && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
     apt-get -qqy update && \
-    apt-get -qqy --no-install-recommends install git unzip wget bash fonts-dejavu python3 python3-pip shellcheck nodejs build-essential && \
+    apt-get --no-install-recommends -qqy install git unzip wget bash fonts-dejavu python3 python3-pip shellcheck nodejs build-essential && \
     curl -fsSL -o /opt/sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip && \
     curl -fsSL -o /opt/sonar-scanner-cli.zip.asc https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip.asc && \
     for server in $(shuf -e hkps://keys.openpgp.org \
