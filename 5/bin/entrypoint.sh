@@ -27,7 +27,7 @@ if [[ "$#" == 0 ]]; then
 fi
 
 # if first arg looks like a flag, assume we want to run sonar-scanner with flags
-if [[ "${1#-}" != "${1}" ]] || command -v "${1}" > /dev/null; then
+if [[ "${1#-}" != "${1}" ]] || ! command -v "${1}" > /dev/null; then
   set -- sonar-scanner "$@"
 fi
 
