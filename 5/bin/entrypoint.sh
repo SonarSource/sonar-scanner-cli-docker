@@ -5,17 +5,18 @@ set -euo pipefail
 declare -a args=()
 
 add_env_var_as_env_prop() {
-  if [ "$1" ]; then
+  if [[ -n "$1" ]]; then
     args+=("-D$2=$1")
   fi
 }
 
 # If there are certificates in /tmp/cacers we will import those into the systems truststore
-if [ -d /tmp/cacerts ]; then
-  if [ "$(ls -A /tmp/cacerts)" ]; then
+if [[ -d /tmp/cacerts ]]; then
+  # shellcheck disable=SC2312
+  if [[ -n "$(ls -A /tmp/cacerts 2>/dev/null)" ]]; then
     for f in /tmp/cacerts/*
     do
-      keytool -importcert -file "${f}" -alias "$(basename ${f})" -keystore /usr/lib/jvm/default-jvm/jre/lib/security/cacerts -storepass changeit -trustcacerts -noprompt
+      keytool -importcert -file "${f}" -alias "$(basename "${f}")" -keystore /usr/lib/jvm/default-jvm/jre/lib/security/cacerts -storepass changeit -trustcacerts -noprompt
     done
   fi
 fi
@@ -26,15 +27,14 @@ if [[ "$#" == 0 ]]; then
 fi
 
 # if first arg looks like a flag, assume we want to run sonar-scanner with flags
-if [[ "${1#-}" != "${1}" ]] || [[ -z "$(command -v "${1}")" ]]; then
+if [[ "${1#-}" != "${1}" ]] || ! command -v "${1}" > /dev/null; then
   set -- sonar-scanner "$@"
 fi
 
 if [[ "$1" = 'sonar-scanner' ]]; then
-  add_env_var_as_env_prop "${SONAR_LOGIN:-}" "sonar.login"
-  add_env_var_as_env_prop "${SONAR_PASSWORD:-}" "sonar.password"
+  add_env_var_as_env_prop "${SONAR_TOKEN:-}" "sonar.token"
   add_env_var_as_env_prop "${SONAR_PROJECT_BASE_DIR:-}" "sonar.projectBaseDir"
-  if [ ${#args[@]} -ne 0 ]; then
+  if [[ ${#args[@]} -ne 0 ]]; then
     set -- sonar-scanner "${args[@]}" "${@:2}"
   fi
 fi
