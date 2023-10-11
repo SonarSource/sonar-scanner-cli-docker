@@ -15,7 +15,7 @@ teardown() {
 
 @test "scan test project" {
     # shellcheck disable=2312  # The return value is irrelevant
-    until docker run --network=it-sonarqube --rm curlimages/curl:8.2.1 -so - it-sonarqube:9000/api/system/status | grep '"status":"UP"' ; do
+    until docker run --network=it-sonarqube --rm curlimages/curl:8.4.0 -so - it-sonarqube:9000/api/system/status | grep '"status":"UP"' ; do
         sleep 5
     done
 
