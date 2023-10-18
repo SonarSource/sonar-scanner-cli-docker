@@ -2,8 +2,10 @@
 
 # SonarScanner CLI
 
-This is the Git repository that contains source for [SonarScanner CLI](https://github.com/SonarSource/sonar-scanner-cli) Docker images.
+This is the Git repository that contains the source for [SonarScanner CLI](https://github.com/SonarSource/sonar-scanner-cli) Docker images.
 Images are available on [Docker Hub](https://hub.docker.com/r/sonarsource/sonar-scanner-cli).
+
+Sonar's [Clean Code solutions](https://www.sonarsource.com/solutions/clean-code/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-scanner-cli-docker) help developers deliver high-quality, efficient code standards that benefit the entire team or organization. 
 
 NB: These Docker images are not compatible with C/C#/C++/Objective-C projects.
 
@@ -21,7 +23,7 @@ Be aware that this forum is a community, so the standard pleasantries ("Hi", "Th
 
 If you would like to see a new feature, please create a new thread in the forum ["Suggest new features"](https://community.sonarsource.com/c/suggestions/features).
 
-Please be aware that we are not actively looking for feature contributions. We typically accept minor improvements and bug-fixes.
+Please be aware that we are not actively looking for feature contributions. We typically accept minor improvements and bug fixes.
 
 With that in mind, if you would like to submit a code contribution, please create a pull request for this repository. Please explain your motives to contribute this change: what problem you are trying to fix, what improvement you are trying to make.
 
