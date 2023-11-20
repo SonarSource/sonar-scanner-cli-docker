@@ -27,7 +27,7 @@ teardown() {
     # shellcheck disable=SC2154  # DIR is set by setup_suite
     local REPO_DIR="${DIR}/../target_repository"
 
-    local PROJECT_SCAN_DIR="${REPO_DIR}/sonarqube-scanner"
+    local PROJECT_SCAN_DIR="${REPO_DIR}/sonar-scanner"
     scanner_props_location="${PROJECT_SCAN_DIR}/sonar-project.properties"
 
     cat <<EOF > "${scanner_props_location}"
