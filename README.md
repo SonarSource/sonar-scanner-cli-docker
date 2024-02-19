@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/SonarSource/sonar-scanner-cli-docker.svg?branch=master)](https://travis-ci.org/SonarSource/sonar-scanner-cli-docker)
+[![Main Workflow](https://github.com/SonarSource/sonar-scanner-cli-docker/actions/workflows/next-scan.yml/badge.svg)](https://github.com/SonarSource/sonar-scanner-cli-docker/actions/workflows/next-scan.yml)
 
 # SonarScanner CLI
 
