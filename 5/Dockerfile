@@ -41,8 +41,8 @@ RUN groupadd --system --gid 1000 scanner-cli && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir pylint && \
     mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache" && \
-    chmod -R 555 "${SONAR_SCANNER_HOME}" "${SRC_PATH}" && \
-    chmod -R 777 "${SRC_PATH}" "${SONAR_USER_HOME}" && \
+    chmod -R 555 "${SONAR_SCANNER_HOME}" && \
+    chmod -R 777 "${SRC_PATH}" "${SONAR_USER_HOME}" "/opt/java/openjdk/lib/security/cacerts" && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
