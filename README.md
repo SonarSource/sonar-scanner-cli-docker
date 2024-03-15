@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/SonarSource/sonar-scanner-cli-docker.svg?branch=master)](https://travis-ci.org/SonarSource/sonar-scanner-cli-docker)
-
-# SonarScanner CLI
+# SonarScanner CLI [![Build Status](https://api.cirrus-ci.com/github/SonarSource/sonar-scanner-cli-docker.svg)](https://cirrus-ci.com/github/SonarSource/sonar-scanner-cli-docker)
 
 This is the Git repository that contains the source for [SonarScanner CLI](https://github.com/SonarSource/sonar-scanner-cli) Docker images.
 Images are available on [Docker Hub](https://hub.docker.com/r/sonarsource/sonar-scanner-cli).
