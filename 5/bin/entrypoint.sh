@@ -16,7 +16,7 @@ if [[ -d /tmp/cacerts ]]; then
   if [[ -n "$(ls -A /tmp/cacerts 2>/dev/null)" ]]; then
     for f in /tmp/cacerts/*
     do
-      keytool -importcert -file "${f}" -alias "$(basename "${f}")" -keystore /opt/java/openjdk/lib/security/cacerts -storepass changeit -trustcacerts -noprompt
+      keytool -importcert -file "${f}" -alias "$(basename "${f}")" -keystore /usr/lib/jvm/default-jvm/jre/lib/security/cacerts -storepass changeit -trustcacerts -noprompt
     done
   fi
 fi
