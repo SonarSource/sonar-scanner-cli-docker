@@ -49,8 +49,14 @@ jobs:
             --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
             --tag "sonarsource/sonar-scanner-cli:latest" \
             --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest" \
+      - name: Setup BATS
+        uses: mig4/setup-bats@v1
+        with:
+          bats-version: 1.2.1
       - name: Test image
-        run: ./run-tests.sh "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
+        run: |
+          echo "Running tests on image"
+          TEST_IMAGE="sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" bats --tap test
       - name: Generate CycloneDX SBOM
         uses: SonarSource/gh-action_sbom@v1
         with:
@@ -76,7 +82,7 @@ jobs:
       - name: Notify success on Slack
         uses: Ilshidur/action-slack@2.1.0
         env:
-          SLACK_CHANNEL: team-sq-devops
+          SLACK_CHANNEL: squad-analysis-experience
           SLACK_WEBHOOK: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
         with:
           args: "Release successful for {{ GITHUB_REPOSITORY }} by {{ GITHUB_ACTOR }}"
@@ -84,7 +90,7 @@ jobs:
         uses: Ilshidur/action-slack@2.1.0
         if: failure()
         env:
-          SLACK_CHANNEL: team-sq-devops
+          SLACK_CHANNEL: squad-analysis-experience
           SLACK_WEBHOOK: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
         with:
           args: "Release failed, see the logs at https://github.com/{{ GITHUB_REPOSITORY }}/actions by {{ GITHUB_ACTOR }}"
