@@ -34,12 +34,10 @@ RUN set -eux; \
     apk del --purge build-dependencies; \
     mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache"; \
     chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}"; \
-    chmod -R 555 "${SONAR_SCANNER_HOME}"; \
-    chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}";
+    chmod -R 777 "${SONAR_SCANNER_HOME}"; \
+    chmod -R 777 "${SRC_PATH}" "${SONAR_USER_HOME}";
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
-
-USER scanner-cli
 
 VOLUME [ "/tmp/cacerts" ]
 
