@@ -27,6 +27,7 @@ jobs:
         id: get_version
         run: |
           IFS=. read major minor micro build <<<"${{ github.event.release.tag_name }}"
+          echo "cli_version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           echo "major_version=${major}" >> $GITHUB_OUTPUT
           echo "major_minor=${major}.${minor}" >> $GITHUB_OUTPUT
           echo "major_minor_patch=${major}.${minor}.${micro}" >> $GITHUB_OUTPUT
@@ -49,6 +50,7 @@ jobs:
             --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
             --tag "sonarsource/sonar-scanner-cli:latest" \
             --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest" \
+            --build-arg SONAR_SCANNER_VERSION=${{ steps.get_version.outputs.cli_version }}
       - name: Test image
         run: ./run-tests.sh "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
       - name: Generate CycloneDX SBOM
