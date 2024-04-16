@@ -38,8 +38,8 @@ multi_arch_build_task:
     - docker buildx use multibuilder
     - docker buildx inspect --bootstrap
   build_script:
-    - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting two architectures, linux/amd64"
-    - docker buildx build --platform linux/amd64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push "${CURRENT_MAJOR_VERSION}"
+    - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting two architectures, linux/amd64 and linux/arm64"
+    - docker buildx build --platform linux/amd64,linux/arm64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push "${CURRENT_MAJOR_VERSION}"
 
 private_scan_task:
   env:
@@ -79,6 +79,7 @@ public_scan_task:
 multi_arch_test_docker_builder:
   env:
     matrix:
+      CIRRUS_ARCH: "arm64"
       CIRRUS_ARCH: "amd64"
   login_script:
     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
