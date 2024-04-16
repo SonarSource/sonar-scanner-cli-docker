@@ -50,9 +50,9 @@ EOF
     rm -rf "${tmpDir}"
 }
 
-@test "ensure we have nodejs installed" {
+@test "ensure we have nodejs 18 installed" {
     run docker run --rm --entrypoint=node "${TEST_IMAGE}" --version
-    [[ "${output}" =~ [0-9]+\.[0-9]+\.[0-9]+ ]]
+    [[ "${output}" =~ v18\.[0-9]+\.[0-9]+ ]]
 }
 
 @test "ensure we are using Java 17" {
