@@ -14,7 +14,6 @@ env:
 
   # Staging image configuration
   STAGING_IMAGE_NAME: sonarsource/sonarqube
-  CURRENT_MAJOR_VERSION: "5"
   CURRENT_TAG: scanner-5.0.1
 
 vm_instance_template: &VM_TEMPLATE
@@ -27,23 +26,16 @@ vm_instance_template: &VM_TEMPLATE
   cpu: 4
   memory: 16G
 
-multi_arch_build_task: 
+build_task:
   ec2_instance:
     <<: *VM_TEMPLATE
   login_script:
     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
-  setup_script:
-    - docker run -t --rm --privileged tonistiigi/binfmt --install all
-    - docker buildx create --name multibuilder
-    - docker buildx use multibuilder
-    - docker buildx inspect --bootstrap
   build_script:
-    - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting two architectures, linux/amd64"
-    - docker buildx build --platform linux/amd64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push "${CURRENT_MAJOR_VERSION}"
+    - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image"
+    - docker build --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push .
 
 private_scan_task:
-  env:
-    platform: amd64
   ec2_instance:
     <<: *VM_TEMPLATE
   login_script:
@@ -54,10 +46,10 @@ private_scan_task:
     - curl -sSL https://unified-agent.s3.amazonaws.com/wss-unified-agent.jar -o wss-unified-agent.jar
     - echo "docker.includes=${CURRENT_TAG}" >> .cirrus/wss-unified-agent.config
   scan_script:
-    - echo "Scan the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting linux/${platform}"
-    - docker pull --platform linux/${platform} "${STAGING_IMAGE_NAME}:${CURRENT_TAG}"
-    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -project ${STAGING_IMAGE_NAME}:${CURRENT_TAG} -wss.url ${WS_WSS_URL} -docker.scanImages true
-depends_on: multi_arch_build
+    - echo "Scan the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image"
+    - docker pull "${STAGING_IMAGE_NAME}:${CURRENT_TAG}"
+    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -wss.url ${WS_WSS_URL} -docker.scanImages true
+depends_on: build
 
 public_scan_task: 
   only_if: $CIRRUS_CRON == 'nightly-mend-scan'
@@ -74,12 +66,9 @@ public_scan_task:
   scan_script:
     - echo "Scan the ${PUBLIC_IMAGE_NAME}:${TAG} image"
     - docker pull "${PUBLIC_IMAGE_NAME}:${TAG}"
-    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -project ${PUBLIC_IMAGE_NAME}:${TAG} -wss.url ${WS_WSS_URL} -docker.scanImages true
+    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -wss.url ${WS_WSS_URL} -docker.scanImages true
 
-multi_arch_test_docker_builder:
-  env:
-    matrix:
-      CIRRUS_ARCH: "amd64"
+test_docker_builder:
   login_script:
     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
   test_script:
@@ -88,4 +77,4 @@ multi_arch_test_docker_builder:
     - git clone https://github.com/SonarSource/sonar-scanning-examples.git target_repository
     - echo "Test the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting linux/${CIRRUS_ARCH}"
     - TEST_IMAGE="${STAGING_IMAGE_NAME}:${CURRENT_TAG}" bats --tap test
-  depends_on: multi_arch_build
+  depends_on: build
