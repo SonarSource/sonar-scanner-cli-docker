@@ -14,7 +14,6 @@ env:
 
   # Staging image configuration
   STAGING_IMAGE_NAME: sonarsource/sonarqube
-  CURRENT_MAJOR_VERSION: "5"
   CURRENT_TAG: scanner-5.0.1
 
 vm_instance_template: &VM_TEMPLATE
@@ -39,7 +38,7 @@ multi_arch_build_task:
     - docker buildx inspect --bootstrap
   build_script:
     - echo "Build the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting two architectures, linux/amd64"
-    - docker buildx build --platform linux/amd64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push "${CURRENT_MAJOR_VERSION}"
+    - docker buildx build --platform linux/amd64 --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push .
 
 private_scan_task:
   env:
