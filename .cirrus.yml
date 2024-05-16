@@ -6,7 +6,7 @@ env:
 
   DOCKER_USERNAME: VAULT[development/kv/data/docker/sonardockerrw data.username]
   DOCKER_PASSWORD: VAULT[development/kv/data/docker/sonardockerrw data.access_token_rwd]
-  
+
   # Mend scan global configuration  
   WS_PRODUCTNAME: SonarSource/sonar-scanner-cli-docker
   MEND_API_KEY: VAULT[development/kv/data/mend data.apikey]
@@ -88,3 +88,18 @@ multi_arch_test_docker_builder:
     - echo "Test the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image supporting linux/${CIRRUS_ARCH}"
     - TEST_IMAGE="${STAGING_IMAGE_NAME}:${CURRENT_TAG}" bats --tap test
   depends_on: multi_arch_build
+
+sonar_scan_task:
+  eks_container:
+    region: eu-central-1
+    cluster_name: ${CIRRUS_CLUSTER_NAME}
+    namespace: default
+    image: sonarsource/sonar-scanner-cli:latest
+    cpu: 4
+    memory: 4G
+  env:
+    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
+    SONAR_HOST_URL: VAULT[development/kv/data/next data.url]
+  script:
+    - source .cirrus/scan.sh
+
