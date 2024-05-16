@@ -40,7 +40,7 @@ jobs:
           path: target_repository
       - name: Build image
         run: |
-          docker build "${{ steps.get_version.outputs.major_version }}" \
+          docker build . \
             --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
             --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
             --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
