@@ -8,13 +8,13 @@ env:
   DOCKER_PASSWORD: VAULT[development/kv/data/docker/sonardockerrw data.access_token_rwd]
   
   # Mend scan global configuration  
-  WS_PRODUCTNAME: SonarSource/sonar-scanner-cli-docker
+  WS_PRODUCTNAME: Scanner/CliDocker
   MEND_API_KEY: VAULT[development/kv/data/mend data.apikey]
   WS_WSS_URL: https://saas-eu.whitesourcesoftware.com/agent
 
   # Staging image configuration
-  STAGING_IMAGE_NAME: sonarsource/sonarqube
-  CURRENT_TAG: scanner-5.0.1
+  STAGING_IMAGE_NAME: sonarsource/sonar-scanner-cli
+  CURRENT_TAG: 10.0.0
 
 vm_instance_template: &VM_TEMPLATE
   experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
