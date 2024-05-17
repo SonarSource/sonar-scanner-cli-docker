@@ -8,9 +8,7 @@ env:
   DOCKER_PASSWORD: VAULT[development/kv/data/docker/sonardockerrw data.access_token_rwd]
 
   # Mend scan global configuration  
-  WS_PRODUCTNAME: SonarSource/sonar-scanner-cli-docker
   MEND_API_KEY: VAULT[development/kv/data/mend data.apikey]
-  WS_WSS_URL: https://saas-eu.whitesourcesoftware.com/agent
 
   # Staging image configuration
   STAGING_IMAGE_NAME: sonarsource/sonarqube
@@ -36,6 +34,8 @@ build_task:
     - docker build --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push .
 
 private_scan_task:
+  # run only on master and long-term branches
+  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*")
   ec2_instance:
     <<: *VM_TEMPLATE
   login_script:
@@ -44,11 +44,11 @@ private_scan_task:
     - apt-get remove -y unattended-upgrades
     - apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre
     - curl -sSL https://unified-agent.s3.amazonaws.com/wss-unified-agent.jar -o wss-unified-agent.jar
-    - echo "docker.includes=${CURRENT_TAG}" >> .cirrus/wss-unified-agent.config
+    - echo "docker.includes=.*${CURRENT_TAG}.*" >> .cirrus/wss-unified-agent.config
   scan_script:
     - echo "Scan the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image"
     - docker pull "${STAGING_IMAGE_NAME}:${CURRENT_TAG}"
-    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -project ${STAGING_IMAGE_NAME}:${CURRENT_TAG} -wss.url ${WS_WSS_URL} -docker.scanImages true
+    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY
 depends_on: build
 
 public_scan_task: 
@@ -62,11 +62,11 @@ public_scan_task:
     - apt-get remove -y unattended-upgrades
     - apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre
     - curl -sSL https://unified-agent.s3.amazonaws.com/wss-unified-agent.jar -o wss-unified-agent.jar
-    - echo "docker.includes=${TAG}" >> .cirrus/wss-unified-agent.config
+    - echo "docker.includes=.*${TAG}.*" >> .cirrus/wss-unified-agent.config
   scan_script:
     - echo "Scan the ${PUBLIC_IMAGE_NAME}:${TAG} image"
     - docker pull "${PUBLIC_IMAGE_NAME}:${TAG}"
-    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -product ${WS_PRODUCTNAME} -project ${PUBLIC_IMAGE_NAME}:${TAG} -wss.url ${WS_WSS_URL} -docker.scanImages true
+    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY
 
 test_docker_builder:
   login_script:
