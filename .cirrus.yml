@@ -4,14 +4,16 @@ env:
   CIRRUS_VAULT_AUTH_PATH: jwt-cirrusci
   CIRRUS_VAULT_ROLE: cirrusci-${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}
 
-  DOCKER_USERNAME: VAULT[development/kv/data/docker/sonardockerrw data.username]
-  DOCKER_PASSWORD: VAULT[development/kv/data/docker/sonardockerrw data.access_token_rwd]
+  ARTIFACTORY_DEPLOY_USERNAME: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-docker-release username]
+  ARTIFACTORY_DEPLOY_PASSWORD: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-docker-release access_token]
 
-  # Mend scan global configuration  
+  # Mend scan global configuration
   MEND_API_KEY: VAULT[development/kv/data/mend data.apikey]
 
   # Staging image configuration
-  STAGING_IMAGE_NAME: sonarsource/sonarqube
+  DOCKER_REPOX_BUILDS_REGISTRY: repox-sonarsource-docker-builds.jfrog.io
+  DOCKER_IMAGE: "sonarsource/sonar-scanner-cli"
+  STAGING_IMAGE_TAG: "${DOCKER_REPOX_BUILDS_REGISTRY}/${DOCKER_IMAGE}:${CI_BUILD_NUMBER}"
 
 vm_instance_template: &VM_TEMPLATE
   experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
@@ -31,30 +33,32 @@ build_task:
   ec2_instance:
     <<: *VM_TEMPLATE
   login_script:
-    - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+    - docker login "${DOCKER_REPOX_BUILDS_REGISTRY}" -u "${ARTIFACTORY_DEPLOY_USERNAME}" --password-stdin <<<"${ARTIFACTORY_DEPLOY_PASSWORD}"
   build_script:
-    - echo "Build and push the ${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER} image"
-    - docker build --tag "${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER}" --push .
+    - echo "Build and push the ${STAGING_IMAGE_TAG} image"
+    - docker build --tag "${STAGING_IMAGE_TAG}" --push .
 
-private_scan_task:
+# Scan the current image built and pushed to Artifactory
+mend_task:
   # run only on default and long-term branches
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ "branch-.*")
   ec2_instance:
     <<: *VM_TEMPLATE
   login_script:
-    - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+    - docker login "${DOCKER_REPOX_BUILDS_REGISTRY}" -u "${ARTIFACTORY_DEPLOY_USERNAME}" --password-stdin <<<"${ARTIFACTORY_DEPLOY_PASSWORD}"
   setup_script:
     - apt-get remove -y unattended-upgrades
     - apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre
     - curl -sSL https://unified-agent.s3.amazonaws.com/wss-unified-agent.jar -o wss-unified-agent.jar
-    - echo "docker.includes=.*${STAGING_IMAGE_NAME}.*" >> .cirrus/wss-unified-agent.config
+    - echo "docker.includes=.*${DOCKER_IMAGE}.*" >> .cirrus/wss-unified-agent.config
   scan_script:
-    - echo "Scan the ${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER} image"
-    - docker pull "${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER}"
-    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY
+    - echo "Scan the ${STAGING_IMAGE_TAG} image"
+    - docker pull "${STAGING_IMAGE_TAG}"
+    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -project ${DOCKER_IMAGE}:${CIRRUS_BRANCH}
   depends_on: build
 
-public_scan_task: 
+# Scan the latest image published on Docker Hub
+latest_mend_task:
   only_if: $CIRRUS_CRON == 'nightly-mend-scan'
   env:
     PUBLIC_IMAGE_NAME: sonarsource/sonar-scanner-cli
@@ -65,11 +69,11 @@ public_scan_task:
     - apt-get remove -y unattended-upgrades
     - apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre
     - curl -sSL https://unified-agent.s3.amazonaws.com/wss-unified-agent.jar -o wss-unified-agent.jar
-    - echo "docker.includes=.*${TAG}.*" >> .cirrus/wss-unified-agent.config
+    - echo "docker.includes=.*${PUBLIC_IMAGE_NAME}.*" >> .cirrus/wss-unified-agent.config
   scan_script:
     - echo "Scan the ${PUBLIC_IMAGE_NAME}:${TAG} image"
     - docker pull "${PUBLIC_IMAGE_NAME}:${TAG}"
-    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY
+    - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY -project ${PUBLIC_IMAGE_NAME}:${TAG}
 
 test_docker_builder:
   <<: *ONLY_SONARSOURCE_QA
@@ -77,13 +81,13 @@ test_docker_builder:
     - git submodule init
     - git submodule update
   login_script:
-    - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+    - docker login "${DOCKER_REPOX_BUILDS_REGISTRY}" -u "${ARTIFACTORY_DEPLOY_USERNAME}" --password-stdin <<<"${ARTIFACTORY_DEPLOY_PASSWORD}"
   test_script:
     - apt-get update && apt-get install -qy bats
     - echo "Checking out the sonar-scanning-examples repository"
     - git clone https://github.com/SonarSource/sonar-scanning-examples.git target_repository
-    - echo "Test the ${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER} image"
-    - TEST_IMAGE="${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER}" bats --tap test
+    - echo "Test the ${STAGING_IMAGE_TAG} image"
+    - TEST_IMAGE="${STAGING_IMAGE_TAG}" bats --tap test
   depends_on: build
 
 sonar_scan_task:
