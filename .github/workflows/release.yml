@@ -52,7 +52,7 @@ jobs:
       - name: Setup BATS
         uses: mig4/setup-bats@v1
         with:
-          bats-version: 1.2.1
+          bats-version: 1.11.0
       - name: Test image
         run: |
           echo "Running tests on image"
