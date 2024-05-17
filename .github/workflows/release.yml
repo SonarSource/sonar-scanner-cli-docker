@@ -41,6 +41,9 @@ jobs:
       - name: Build image
         run: |
           docker build . \
+            --annotation "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --annotation "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --annotation "org.opencontainers.image.version=${{ steps.get_version.outputs.major_minor_patch }}" \
             --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
             --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
             --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
