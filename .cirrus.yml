@@ -38,6 +38,7 @@ build_task:
     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
   build_script:
     - echo "Build and push the ${STAGING_IMAGE_NAME}:scanner-${FULL_VERSION} image"
+    - docker --version
     - > 
       docker build
       --annotation "org.opencontainers.image.title=SonarScanner CLI for SonarQube and SonarCloud"
@@ -46,7 +47,7 @@ build_task:
       --annotation "org.opencontainers.image.url=https://hub.docker.com/r/sonarsource/sonar-scanner-cli"
       --annotation "org.opencontainers.image.source=https://github.com/my-organization/my-project/${CIRRUS_REPO_FULL_NAME}"
       --annotation "org.opencontainers.image.documentation=https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/"
-      --annotation "org.opencontainers.image.revision=${GIT_COMMIT}"
+      --annotation "org.opencontainers.image.revision=${CIRRUS_CHANGE_IN_REPO}"
       --annotation "org.opencontainers.image.version=${FULL_VERSION}"
       --tag "${STAGING_IMAGE_NAME}:scanner-${FULL_VERSION}"
       --push
