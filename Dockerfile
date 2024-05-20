@@ -1,7 +1,5 @@
 FROM alpine:3.19
 
-LABEL org.opencontainers.image.url=https://github.com/SonarSource/sonar-scanner-cli-docker
-
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
 ARG SONAR_SCANNER_VERSION=5.0.1.3006
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk \

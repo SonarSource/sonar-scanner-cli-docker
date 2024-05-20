@@ -49,13 +49,13 @@ jobs:
       - name: Build image
         run: |
           docker login --username ${{ fromJSON(steps.secrets.outputs.vault).docker_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).docker_access_token }}"
-          docker pull "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}"
-          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
-          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
-          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
-          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
-          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
-          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
+          docker pull "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.full_image_tag }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.full_image_tag }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.full_image_tag }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.full_image_tag }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.full_image_tag }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.full_image_tag }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.full_image_tag }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
       - name: Setup BATS
         uses: mig4/setup-bats@v1
         with:
