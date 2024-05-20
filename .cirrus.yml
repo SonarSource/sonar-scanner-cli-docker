@@ -12,7 +12,6 @@ env:
 
   # Staging image configuration
   STAGING_IMAGE_NAME: sonarsource/sonarqube
-  CURRENT_TAG: scanner-5.0.1
 
 vm_instance_template: &VM_TEMPLATE
   experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
@@ -24,14 +23,18 @@ vm_instance_template: &VM_TEMPLATE
   cpu: 4
   memory: 16G
 
+only_sonarsource_qa: &ONLY_SONARSOURCE_QA
+  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BUILD_SOURCE == 'api' )
+
 build_task:
+  <<: *ONLY_SONARSOURCE_QA
   ec2_instance:
     <<: *VM_TEMPLATE
   login_script:
     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
   build_script:
-    - echo "Build and push the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image"
-    - docker build --tag "${STAGING_IMAGE_NAME}:${CURRENT_TAG}" --push .
+    - echo "Build and push the ${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER} image"
+    - docker build --tag "${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER}" --push .
 
 private_scan_task:
   # run only on master and long-term branches
@@ -44,10 +47,10 @@ private_scan_task:
     - apt-get remove -y unattended-upgrades
     - apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre
     - curl -sSL https://unified-agent.s3.amazonaws.com/wss-unified-agent.jar -o wss-unified-agent.jar
-    - echo "docker.includes=.*${CURRENT_TAG}.*" >> .cirrus/wss-unified-agent.config
+    - echo "docker.includes=.*${STAGING_IMAGE_NAME}.*" >> .cirrus/wss-unified-agent.config
   scan_script:
-    - echo "Scan the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image"
-    - docker pull "${STAGING_IMAGE_NAME}:${CURRENT_TAG}"
+    - echo "Scan the ${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER} image"
+    - docker pull "${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER}"
     - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY
 depends_on: build
 
@@ -75,8 +78,8 @@ test_docker_builder:
     - apt-get update && apt-get install -qy bats
     - echo "Checking out the sonar-scanning-examples repository"
     - git clone https://github.com/SonarSource/sonar-scanning-examples.git target_repository
-    - echo "Test the ${STAGING_IMAGE_NAME}:${CURRENT_TAG} image"
-    - TEST_IMAGE="${STAGING_IMAGE_NAME}:${CURRENT_TAG}" bats --tap test
+    - echo "Test the ${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER} image"
+    - TEST_IMAGE="${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER}" bats --tap test
   depends_on: build
 
 sonar_scan_task:

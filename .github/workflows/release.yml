@@ -27,15 +27,17 @@ jobs:
         id: get_version
         run: |
           full_image_tag=${{ github.event.release.tag_name }}
-          if [[ ! ${full_image_tag} =~ ^[1-9][0-9]+.[0-9]+.[0-9]+_[0-9]+.[0-9]+.[0-9]+ ]]; then
-            echo "The release tag should be in the format of {major}.{minor}.{patch}_{scanner_major}.{scanner_minor}.{scanner_patch} but it was ${full_image_tag}"
+          if [[ ! ${full_image_tag} =~ ^[1-9][0-9]+.[0-9]+.[0-9]+.[0-9]+_[0-9]+.[0-9]+.[0-9]+ ]]; then
+            echo "The release tag should be in the format of {major}.{minor}.{patch}.{buildnumber}_{scanner_major}.{scanner_minor}.{scanner_patch} but it was ${full_image_tag}"
             exit 1
           fi
           
-          IFS=. read docker_major docker_minor rest <<<"${full_image_tag}"
+          IFS=. read docker_major docker_minor docker_patch build_and_scanner <<<"${full_image_tag}"
+          IFS=_ read buildnumber scanner_version <<<"${build_and_scanner}"
           echo "major_version=${docker_major}" >> $GITHUB_OUTPUT
           echo "major_minor=${docker_major}.${docker_minor}" >> $GITHUB_OUTPUT
-          echo "major_minor_patch=${full_image_tag}" >> $GITHUB_OUTPUT
+          echo "full_image_tag=${full_image_tag}" >> $GITHUB_OUTPUT
+          echo "buildnumber=${buildnumber}" >> $GITHUB_OUTPUT
         shell: bash
       - uses: actions/checkout@v2
         with:
@@ -46,15 +48,14 @@ jobs:
           path: target_repository
       - name: Build image
         run: |
-          docker build . \
-            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
-            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
-            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
-            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
-            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
-            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}" \
-            --tag "sonarsource/sonar-scanner-cli:latest" \
-            --tag "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest" \
+          docker login --username ${{ fromJSON(steps.secrets.outputs.vault).docker_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).docker_access_token }}"
+          docker pull "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
+          docker tag "sonarsource/sonarqube:scanner-${{ steps.get_version.outputs.buildnumber }}" "repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
       - name: Setup BATS
         uses: mig4/setup-bats@v1
         with:
@@ -62,12 +63,12 @@ jobs:
       - name: Test image
         run: |
           echo "Running tests on image"
-          TEST_IMAGE="sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" bats --tap test
+          TEST_IMAGE="sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}" bats --tap test
       - name: Generate CycloneDX SBOM
         uses: SonarSource/gh-action_sbom@v1
         with:
-          image: "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
-          filename: "sonar-scanner-cli-${{ matrix.tag }}-bom.json"
+          image: "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
+          filename: "sonar-scanner-cli-docker-${{ steps.get_version.outputs.full_image_tag }}-bom.json"
           upload-artifact: true
           upload-release-assets: true
         env:
@@ -78,13 +79,11 @@ jobs:
           docker login --username ${{ fromJSON(steps.secrets.outputs.vault).docker_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).docker_access_token }}"
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
-          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
-          docker push sonarsource/sonar-scanner-cli:latest
+          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}
           docker login repox-sonarsource-docker-releases.jfrog.io --username vault-SonarSource-sonar-scanner-cli-docker-docker-release --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}"
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
           docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
-          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor_patch }}
-          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:latest
+          docker push repox-sonarsource-docker-releases.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}
       - name: Notify success on Slack
         uses: Ilshidur/action-slack@2.1.0
         env:
