@@ -37,8 +37,8 @@ build_task:
     - docker build --tag "${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER}" --push .
 
 private_scan_task:
-  # run only on master and long-term branches
-  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*")
+  # run only on default and long-term branches
+  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ "branch-.*")
   ec2_instance:
     <<: *VM_TEMPLATE
   login_script:
@@ -52,7 +52,7 @@ private_scan_task:
     - echo "Scan the ${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER} image"
     - docker pull "${STAGING_IMAGE_NAME}:scanner-${CI_BUILD_NUMBER}"
     - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY
-depends_on: build
+  depends_on: build
 
 public_scan_task: 
   only_if: $CIRRUS_CRON == 'nightly-mend-scan'
@@ -72,6 +72,7 @@ public_scan_task:
     - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY
 
 test_docker_builder:
+  <<: *ONLY_SONARSOURCE_QA
   login_script:
     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
   test_script:
@@ -83,6 +84,7 @@ test_docker_builder:
   depends_on: build
 
 sonar_scan_task:
+  <<: *ONLY_SONARSOURCE_QA
   eks_container:
     region: eu-central-1
     cluster_name: ${CIRRUS_CLUSTER_NAME}
