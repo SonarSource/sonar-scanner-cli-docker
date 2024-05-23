@@ -11,6 +11,7 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk \
     SONAR_USER_HOME=${SONAR_SCANNER_HOME}/.sonar \
     PATH=${SONAR_SCANNER_HOME}/bin:${PATH} \
     SRC_PATH=/usr/src \
+    SCANNER_WORKDIR_PATH=/tmp/.scannerwork \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 
@@ -32,10 +33,10 @@ RUN set -eux; \
     rm sonar-scanner-cli.zip sonar-scanner-cli.zip.asc; \
     mv sonar-scanner-${SONAR_SCANNER_VERSION} ${SONAR_SCANNER_HOME}; \
     apk del --purge build-dependencies; \
-    mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache"; \
-    chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}"; \
+    mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache" "${SCANNER_WORKDIR_PATH}"; \
+    chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SCANNER_WORKDIR_PATH}"; \
     chmod -R 555 "${SONAR_SCANNER_HOME}"; \
-    chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}";
+    chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}";
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 

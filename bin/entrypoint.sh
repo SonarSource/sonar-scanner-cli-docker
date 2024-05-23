@@ -34,6 +34,7 @@ fi
 if [[ "$1" = 'sonar-scanner' ]]; then
   add_env_var_as_env_prop "${SONAR_TOKEN:-}" "sonar.token"
   add_env_var_as_env_prop "${SONAR_PROJECT_BASE_DIR:-}" "sonar.projectBaseDir"
+  add_env_var_as_env_prop "${SCANNER_WORKDIR_PATH:-}" "sonar.working.directory"
   if [[ ${#args[@]} -ne 0 ]]; then
     set -- sonar-scanner "${args[@]}" "${@:2}"
   fi
