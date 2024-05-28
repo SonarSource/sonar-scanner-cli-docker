@@ -36,7 +36,9 @@ RUN set -eux; \
     mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache" "${SCANNER_WORKDIR_PATH}"; \
     chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SCANNER_WORKDIR_PATH}"; \
     chmod -R 555 "${SONAR_SCANNER_HOME}"; \
-    chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}";
+    chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}"; \
+    # Allow entrypoint.sh (run with user scanner-cli) to import certificate in the JVM truststore
+    chmod o+w /etc/ssl/certs/java/cacerts;
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
