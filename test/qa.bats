@@ -89,3 +89,15 @@ EOF
     assert_output --regexp '17\.[0-9]+\.[0-9]+'
 }
 
+@test "ensure we can add certificates" {
+    local projectBaseDir=""
+    projectBaseDir="$(mktemp -d)"
+
+    run docker run --rm \
+            -v "${projectBaseDir}:/usr/src" \
+            -v ${DIR}/cacerts:/tmp/cacerts \
+            "${TEST_IMAGE}" \
+            -Dsonar.scanner.dumpToFile=out.properties
+
+    assert_output --partial 'INFO: EXECUTION SUCCESS'
+}
