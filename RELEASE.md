@@ -2,32 +2,16 @@
 
 Docker image release cycle and sonar-scanner-cli product
 ---
-We consider the **docker image** as part of the sonar-scanner-cli **product**. Therefore, it follows the same release process.
+We consider the **docker image** as a separate component from the sonar-scanner-cli ZIP distribution, having its own release scheme. It has not always been the case.
+Before the 10.x release, the two components had the same release cycle. This created bad user experience when we had to release a breaking change of the docker image under the same tag.
 
-Overview
---------
-
-Release of a new version of the official sonar-scanner-cli Docker images is made of several operations, that needs to be done after the release of sonar-scanner-cli itself:
-
-1. bump the version of sonar-scanner-cli in Dockerfiles
-3. Update the docker hub sonar-scanner-cli documentation (if applicable)
-4. Update Docker Hub's sonar-scanner-cli images
-5. add a GIT tag for the new version and create a release on GitHub.
-
-## Important note on github release step 5
-
-Creating a github release will trigger the `release.yml` workflow which will build and push the docker images to the **organisation sonarsource account** on docker hub (see [here](https://hub.docker.com/u/sonarsource)). Which is different from the official image workflow.
-
-This organization release is now **deprecated**, nonetheless we will keep triggering it until it is properly communicated to the users.
-
-One can expect this workflow to follow the SonarSource deprecation model, which means we will stop pushing to the organization account 1 year after the deprecation announcement.
 
 ## Tips
 
-Bump the version of sonar-scanner-cli in Dockerfiles
+Bump the version of packaged sonar-scanner-cli in Dockerfiles
 -----------------------------
 
-The version of sonar-scanner-cli is hardcoded in each Dockerfile of this repository and must be updated in master branch.
+The version of sonar-scanner-cli is hardcoded in the Dockerfile of this repository and must be updated in master branch.
 
 Update the docker hub sonar-scanner-cli's documentation (if applicable)
 -------------------------------
