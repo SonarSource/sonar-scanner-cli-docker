@@ -73,6 +73,9 @@ public_scan_task:
 
 test_docker_builder:
   <<: *ONLY_SONARSOURCE_QA
+  submodules_script:
+    - git submodule init
+    - git submodule update
   login_script:
     - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
   test_script:

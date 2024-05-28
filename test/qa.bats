@@ -1,3 +1,6 @@
+load 'test_helper/bats-support/load'
+load 'test_helper/bats-assert/load'
+
 setup() {
     export DIR
     # shellcheck disable=SC2154  # BATS_TEST_FILENAME is set by bats
@@ -44,17 +47,18 @@ EOF
         --env SONAR_USER_HOME="/usr/.sonar" \
         "${TEST_IMAGE}"
 
-    [[ "${output}" =~ "INFO: EXECUTION SUCCESS" ]]
+    assert_output --partial 'INFO: EXECUTION SUCCESS'
 
     rm -rf "${tmpDir}"
 }
 
 @test "ensure we have nodejs installed" {
     run docker run --rm --entrypoint=node "${TEST_IMAGE}" --version
-    [[ "${output}" =~ [0-9]+\.[0-9]+\.[0-9]+ ]]
+    assert_output --regexp '[0-9]+\.[0-9]+\.[0-9]+'
 }
 
 @test "ensure we are using Java 17" {
     run docker run --rm --entrypoint=java "${TEST_IMAGE}" --version
-    [[ "${output}" =~ 17\.[0-9]+\.[0-9]+ ]]
+    assert_output --regexp '17\.[0-9]+\.[0-9]+'
 }
+
