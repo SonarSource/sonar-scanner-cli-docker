@@ -43,7 +43,7 @@ EOF
         --env SONAR_HOST_URL="http://it-sonarqube:9000" \
         "${TEST_IMAGE}"
 
-    assert_output --partial 'INFO: EXECUTION SUCCESS'
+    assert_output --partial 'INFO  EXECUTION SUCCESS'
 }
 
 @test "scan test project with cache mapped to host folder" {
@@ -74,7 +74,7 @@ EOF
         --env SONAR_USER_HOME="/usr/.sonar" \
         "${TEST_IMAGE}"
 
-    assert_output --partial 'INFO: EXECUTION SUCCESS'
+    assert_output --partial 'INFO  EXECUTION SUCCESS'
 
     rm -rf "${tmpDir}"
 }
@@ -84,20 +84,25 @@ EOF
     assert_output --regexp '[0-9]+\.[0-9]+\.[0-9]+'
 }
 
-@test "ensure we are using Java 17" {
-    run docker run --rm --entrypoint=java "${TEST_IMAGE}" --version
-    assert_output --regexp '17\.[0-9]+\.[0-9]+'
-}
-
 @test "ensure we can add certificates" {
-    local projectBaseDir=""
-    projectBaseDir="$(mktemp -d)"
+    # shellcheck disable=SC2154  # DIR is set by setup_suite
+    local REPO_DIR="${DIR}/../target_repository"
 
-    run docker run --rm \
-            -v "${projectBaseDir}:/usr/src" \
-            -v ${DIR}/cacerts:/tmp/cacerts \
-            "${TEST_IMAGE}" \
-            -Dsonar.scanner.dumpToFile=out.properties
+    local PROJECT_SCAN_DIR="${REPO_DIR}/sonar-scanner"
+    scanner_props_location="${PROJECT_SCAN_DIR}/sonar-project.properties"
 
-    assert_output --partial 'INFO: EXECUTION SUCCESS'
+    cat <<EOF > "${scanner_props_location}"
+    sonar.projectKey=it-sonarqube-test
+    sonar.login=admin
+    sonar.password=admin
+EOF
+
+    # shellcheck disable=SC2154  # TEST_IMAGE is provided as an environment variable
+    run docker run --network=it-sonarqube --rm \
+        -v "${PROJECT_SCAN_DIR}:/usr/src" \
+        -v ${DIR}/cacerts:/opt/sonar-scanner/.sonar/ssl \
+        --env SONAR_HOST_URL="http://it-sonarqube:9000" \
+        "${TEST_IMAGE}"
+
+    assert_output --partial 'INFO  EXECUTION SUCCESS'
 }

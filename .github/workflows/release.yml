@@ -82,14 +82,12 @@ jobs:
         run: |
           buildnumber=${{ steps.get_version.outputs.buildnumber }}
           
-          docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:latest"
           docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
           docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
           docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
 
           docker login --username ${{ fromJSON(steps.secrets.outputs.vault).docker_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).docker_access_token }}"
 
-          docker push sonarsource/sonar-scanner-cli:latest
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}
