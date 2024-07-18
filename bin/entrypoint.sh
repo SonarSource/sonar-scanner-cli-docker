@@ -10,18 +10,6 @@ add_env_var_as_env_prop() {
   fi
 }
 
-# If there are certificates in /tmp/cacers we will import those into the systems truststore
-if [[ -d /tmp/cacerts ]]; then
-  # shellcheck disable=SC2312
-  if [[ -n "$(ls -A /tmp/cacerts 2>/dev/null)" ]]; then
-    for f in /tmp/cacerts/*
-    do
-      echo "Importing certificate: ${f}"
-      keytool -importcert -file "${f}" -alias "$(basename "${f}")" -keystore /etc/ssl/certs/java/cacerts -storepass changeit -trustcacerts -noprompt
-    done
-  fi
-fi
-
 # if nothing is passed, assume we want to run sonar-scanner
 if [[ "$#" == 0 ]]; then
   set -- sonar-scanner
