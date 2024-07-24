@@ -13,7 +13,7 @@ ENV SCANNER_ZIP_URL="${SCANNER_BINARIES}/sonar-scanner-cli-${SONAR_SCANNER_VERSI
 WORKDIR /opt
 
 RUN set -eux; \
-    apk add --no-cache --virtual build-dependencies wget unzip gnupg; \
+    apk add --no-cache --virtual build-dependencies gnupg unzip wget; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip ${SCANNER_ZIP_URL}; \
     wget -U "scannercli" -q -O /opt/sonar-scanner-cli.zip.asc ${SCANNER_ZIP_URL}.asc; \
     for server in $(shuf -e hkps://keys.openpgp.org \
