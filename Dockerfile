@@ -44,19 +44,17 @@ COPY --from=builder /opt/sonar-scanner /opt/sonar-scanner
 RUN \
     dnf install -y git \
     && dnf install -y nodejs \
-    && dnf clean all
-
-RUN set -eux; \
-    groupadd --system --gid 1000 scanner-cli; \
-    useradd --system --uid 1000 --gid scanner-cli scanner-cli; \
-    chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}"; \
-    mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache" "${SCANNER_WORKDIR_PATH}"; \
-    chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SCANNER_WORKDIR_PATH}"; \
-    chmod -R 555 "${SONAR_SCANNER_HOME}"; \
-    chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}";
-
-# Security updates
-RUN dnf upgrade -y --releasever=latest --security
+    && dnf clean all \
+    && set -eux \
+    && groupadd --system --gid 1000 scanner-cli \
+    && useradd --system --uid 1000 --gid scanner-cli scanner-cli \
+    && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" \
+    && mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache" "${SCANNER_WORKDIR_PATH}" \
+    && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SCANNER_WORKDIR_PATH}" \
+    && chmod -R 555 "${SONAR_SCANNER_HOME}" \
+    && chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}" \
+    # Security updates
+    && dnf upgrade -y --releasever=latest --security
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
