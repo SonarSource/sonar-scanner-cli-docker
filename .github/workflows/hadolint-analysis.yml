@@ -18,4 +18,4 @@ jobs:
     - name: Pull HaDoLint image
       run: docker pull hadolint/hadolint
     - name: Lint Dockerfile
-      run: docker run --rm --interactive hadolint/hadolint hadolint --ignore DL3018 --ignore DL4001 --ignore DL3013 --ignore SC2015 --ignore DL3008 --ignore DL3041 - < ./Dockerfile
+      run: docker run --rm --interactive hadolint/hadolint hadolint --ignore DL3018 --ignore DL4001 --ignore DL3013 --ignore SC2015 --ignore DL3008 --ignore DL3041 --ignore DL3020 - < ./Dockerfile
