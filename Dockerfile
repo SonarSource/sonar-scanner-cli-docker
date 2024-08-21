@@ -37,7 +37,8 @@ ENV HOME=/tmp \
     SONAR_USER_HOME=${SONAR_SCANNER_HOME}/.sonar \
     PATH=${SONAR_SCANNER_HOME}/bin:${PATH} \
     SRC_PATH=/usr/src \
-    SCANNER_WORKDIR_PATH=/tmp/.scannerwork
+    SCANNER_WORKDIR_PATH=/tmp/.scannerwork \
+    LANG=C.UTF-8
 
 # Copy Scanner installation from builder image
 COPY --from=builder /opt/sonar-scanner /opt/sonar-scanner
