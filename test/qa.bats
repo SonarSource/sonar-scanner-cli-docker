@@ -84,7 +84,7 @@ EOF
     assert_output --regexp '[0-9]+\.[0-9]+\.[0-9]+'
 }
 
-@test "ensure we can add certificates" {
+@test "ensure we can add certificates the new way" {
     # shellcheck disable=SC2154  # DIR is set by setup_suite
     local REPO_DIR="${DIR}/../target_repository"
 
@@ -100,9 +100,33 @@ EOF
     # shellcheck disable=SC2154  # TEST_IMAGE is provided as an environment variable
     run docker run --network=it-sonarqube --rm \
         -v "${PROJECT_SCAN_DIR}:/usr/src" \
-        -v ${DIR}/cacerts:/opt/sonar-scanner/.sonar/ssl \
+        -v ${DIR}/ssl:/opt/sonar-scanner/.sonar/ssl \
         --env SONAR_HOST_URL="http://it-sonarqube:9000" \
         "${TEST_IMAGE}"
 
+    assert_output --partial 'INFO  EXECUTION SUCCESS'
+}
+
+@test "ensure we can add certificates the old way" {
+    # shellcheck disable=SC2154  # DIR is set by setup_suite
+    local REPO_DIR="${DIR}/../target_repository"
+
+    local PROJECT_SCAN_DIR="${REPO_DIR}/sonar-scanner"
+    scanner_props_location="${PROJECT_SCAN_DIR}/sonar-project.properties"
+
+    cat <<EOF > "${scanner_props_location}"
+    sonar.projectKey=it-sonarqube-test
+    sonar.login=admin
+    sonar.password=admin
+EOF
+
+    # shellcheck disable=SC2154  # TEST_IMAGE is provided as an environment variable
+    run docker run --network=it-sonarqube --rm \
+        -v "${PROJECT_SCAN_DIR}:/usr/src" \
+        -v ${DIR}/cacerts:/tmp/cacerts \
+        --env SONAR_HOST_URL="http://it-sonarqube:9000" \
+        "${TEST_IMAGE}"
+
+    assert_output --partial 'Importing certificates from /tmp/cacerts is deprecated'
     assert_output --partial 'INFO  EXECUTION SUCCESS'
 }

@@ -8,7 +8,7 @@ ENV HOME=/tmp \
     XDG_CONFIG_HOME=/tmp \
     SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
     SCANNER_BINARIES=https://binaries.sonarsource.com/Distribution/sonar-scanner-cli
-ENV SCANNER_ZIP_URL="${SCANNER_BINARIES}/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip"
+ENV SCANNER_ZIP_URL="${SCANNER_BINARIES}/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip"
 
 WORKDIR /opt
 
@@ -24,11 +24,11 @@ RUN set -eux; \
     gpg --verify /opt/sonar-scanner-cli.zip.asc /opt/sonar-scanner-cli.zip; \
     unzip sonar-scanner-cli.zip; \
     rm sonar-scanner-cli.zip sonar-scanner-cli.zip.asc; \
-    mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux-x64 ${SONAR_SCANNER_HOME}; \
+    mv sonar-scanner-${SONAR_SCANNER_VERSION} ${SONAR_SCANNER_HOME}; \
     apk del --purge build-dependencies;
 
 
-FROM amazonlinux:2023 AS scanner-cli-base
+FROM amazoncorretto:17-al2023 AS scanner-cli-base
 
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
 ENV HOME=/tmp \
