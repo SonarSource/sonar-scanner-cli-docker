@@ -5,7 +5,7 @@ Images are available on [Docker Hub](https://hub.docker.com/r/sonarsource/sonar-
 
 Sonar's [Clean Code solutions](https://www.sonarsource.com/solutions/clean-code/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-scanner-cli-docker) help developers deliver high-quality, efficient code standards that benefit the entire team or organization. 
 
-NB: These Docker images are not compatible with C/C#/C++/Objective-C projects.
+NB: These Docker images are not compatible with C# and Objective-C projects.
 
 ## Usage and configuration
 
