@@ -57,7 +57,8 @@ RUN \
     && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SCANNER_WORKDIR_PATH}" \
     && chmod -R 555 "${SONAR_SCANNER_HOME}" \
     && chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}" \
-    # Security updates
+    # Security updates \
+    && npm update tar -g \
     && dnf upgrade -y --releasever=latest --security
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
