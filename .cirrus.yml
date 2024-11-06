@@ -15,15 +15,11 @@ env:
   DOCKER_IMAGE: "sonarsource/sonar-scanner-cli"
   STAGING_IMAGE_TAG: "${DOCKER_REPOX_BUILDS_REGISTRY}/${DOCKER_IMAGE}:${CI_BUILD_NUMBER}"
 
-vm_instance_template: &VM_TEMPLATE
+ec2_instance: &EC2_TEMPLATE
   experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
   image: docker-builder-v*
-  type: t2.small
+  type: t2.xlarge
   region: eu-central-1
-  subnet_id: ${CIRRUS_AWS_SUBNET}
-  disk: 10
-  cpu: 4
-  memory: 16G
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_CRON == "" && $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BUILD_SOURCE == 'api' )
@@ -31,7 +27,7 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 build_task:
   <<: *ONLY_SONARSOURCE_QA
   ec2_instance:
-    <<: *VM_TEMPLATE
+    <<: *EC2_TEMPLATE
   login_script:
     - docker login "${DOCKER_REPOX_BUILDS_REGISTRY}" -u "${ARTIFACTORY_DEPLOY_USERNAME}" --password-stdin <<<"${ARTIFACTORY_DEPLOY_PASSWORD}"
   build_script:
@@ -43,7 +39,7 @@ mend_task:
   # run only on default and long-term branches
   only_if: $CIRRUS_CRON == "" && $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ "branch-.*")
   ec2_instance:
-    <<: *VM_TEMPLATE
+    <<: *EC2_TEMPLATE
   login_script:
     - docker login "${DOCKER_REPOX_BUILDS_REGISTRY}" -u "${ARTIFACTORY_DEPLOY_USERNAME}" --password-stdin <<<"${ARTIFACTORY_DEPLOY_PASSWORD}"
   setup_script:
@@ -63,7 +59,7 @@ mend_task:
 latest_mend_task:
   only_if: $CIRRUS_CRON == 'nightly-mend-scan'
   ec2_instance:
-    <<: *VM_TEMPLATE
+    <<: *EC2_TEMPLATE
   setup_script:
     - apt-get remove -y unattended-upgrades
     - apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre
