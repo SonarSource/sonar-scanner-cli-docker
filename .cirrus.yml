@@ -80,7 +80,7 @@ test_docker_builder:
   login_script:
     - docker login "${DOCKER_REPOX_BUILDS_REGISTRY}" -u "${ARTIFACTORY_DEPLOY_USERNAME}" --password-stdin <<<"${ARTIFACTORY_DEPLOY_PASSWORD}"
   test_script:
-    - apt-get update && apt-get install -qy bats
+    - apt-get update && apt-get install -qy bats curl jq
     - echo "Checking out the sonar-scanning-examples repository"
     - git clone https://github.com/SonarSource/sonar-scanning-examples.git target_repository
     - echo "Test the ${STAGING_IMAGE_TAG} image"

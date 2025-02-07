@@ -10,13 +10,15 @@ setup_file() {
     docker network create it-sonarqube
 
     echo "# Start SonarQube Enterprise for Integration Tests" >&3
-    docker run --network=it-sonarqube --name=it-sonarqube -d sonarqube:enterprise
+    docker run -p 9000:9000 --network=it-sonarqube --name=it-sonarqube -d sonarqube:enterprise
 
     echo "# Wait for SonarQube to be up and running" >&3
     # shellcheck disable=2312  # The return value is irrelevant
-    until docker run --network=it-sonarqube --rm curlimages/curl:8.4.0 -so - it-sonarqube:9000/api/system/status | grep '"status":"UP"' ; do
+    until curl http://localhost:9000/api/system/status | grep '"status":"UP"' ; do
         sleep 5
     done
+
+    export ANALYSIS_TOKEN="$( curl -s -X POST --user admin:admin "http://localhost:9000/api/user_tokens/generate?type=GLOBAL_ANALYSIS_TOKEN&name=qa" | jq -r '.token' )"
 }
 
 teardown_file() {
@@ -33,8 +35,7 @@ teardown_file() {
 
     cat <<EOF > "${scanner_props_location}"
     sonar.projectKey=it-sonarqube-test
-    sonar.login=admin
-    sonar.password=admin
+    sonar.token=${ANALYSIS_TOKEN}
 EOF
 
     # shellcheck disable=SC2154  # TEST_IMAGE is provided as an environment variable
@@ -62,8 +63,7 @@ EOF
 
     cat <<EOF > "${scanner_props_location}"
     sonar.projectKey=it-sonarqube-test
-    sonar.login=admin
-    sonar.password=admin
+    sonar.token=${ANALYSIS_TOKEN}
 EOF
 
     # shellcheck disable=SC2154  # TEST_IMAGE is provided as an environment variable
@@ -93,8 +93,7 @@ EOF
 
     cat <<EOF > "${scanner_props_location}"
     sonar.projectKey=it-sonarqube-test
-    sonar.login=admin
-    sonar.password=admin
+    sonar.token=${ANALYSIS_TOKEN}
 EOF
 
     # shellcheck disable=SC2154  # TEST_IMAGE is provided as an environment variable
@@ -116,8 +115,7 @@ EOF
 
     cat <<EOF > "${scanner_props_location}"
     sonar.projectKey=it-sonarqube-test
-    sonar.login=admin
-    sonar.password=admin
+    sonar.token=${ANALYSIS_TOKEN}
 EOF
 
     # shellcheck disable=SC2154  # TEST_IMAGE is provided as an environment variable
