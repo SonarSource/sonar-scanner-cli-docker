@@ -52,7 +52,7 @@ jobs:
           docker login repox-sonarsource-docker-builds.jfrog.io --username ${{ fromJSON(steps.secrets.outputs.vault).repox_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}"
           docker pull "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.buildnumber }}"
       - name: Generate CycloneDX SBOM
-        uses: SonarSource/gh-action_sbom@v1
+        uses: SonarSource/gh-action_sbom@v3
         with:
           image: "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.buildnumber }}"
           filename: "sonar-scanner-cli-docker-${{ steps.get_version.outputs.full_image_tag }}-bom.json"
