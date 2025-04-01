@@ -47,6 +47,7 @@ COPY --from=builder /opt/sonar-scanner /opt/sonar-scanner
 RUN \
     dnf install -y git \
     && dnf install -y tar \
+    && dnf install -y nodejs \
     && dnf clean all \
     && set -eux \
     && groupadd --system --gid 1000 scanner-cli \
@@ -56,8 +57,6 @@ RUN \
     && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SCANNER_WORKDIR_PATH}" \
     && chmod -R 555 "${SONAR_SCANNER_HOME}" \
     && chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}" \
-    # Fix CVEs \
-    && dnf update -y python3.9 --releasever 2023.6.20250317 \
     # Security updates
     && dnf upgrade -y --releasever=latest --security
 
