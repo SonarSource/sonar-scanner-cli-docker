@@ -18,7 +18,7 @@ env:
 ec2_instance: &EC2_TEMPLATE
   experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
   image: docker-builder-v*
-  type: t2.xlarge
+  type: m7i.xlarge
   region: eu-central-1
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
