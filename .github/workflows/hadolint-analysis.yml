@@ -10,7 +10,7 @@ on:
 jobs:
   v5:
     name: Dockerfile-Linting
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     permissions:
       contents: read
     steps:
