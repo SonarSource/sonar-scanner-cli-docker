@@ -47,7 +47,8 @@ COPY --from=builder /opt/sonar-scanner /opt/sonar-scanner
 RUN \
     dnf install -y git \
     && dnf install -y tar \
-    && dnf install -y nodejs \
+    && dnf install -y nodejs20 \
+    && alternatives --set node /usr/bin/node-20 \
     && dnf clean all \
     && set -eux \
     && groupadd --system --gid 1000 scanner-cli \
