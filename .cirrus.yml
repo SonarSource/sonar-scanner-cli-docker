@@ -82,11 +82,11 @@ test_task:
   login_script:
     - docker login "${DOCKER_REPOX_BUILDS_REGISTRY}" -u "${ARTIFACTORY_DEPLOY_USERNAME}" --password-stdin <<<"${ARTIFACTORY_DEPLOY_PASSWORD}"
   test_script:
-    - apt-get update && apt-get install -qy bats curl jq
+    - apt-get update && apt-get install -qy curl jq
     - echo "Checking out the sonar-scanning-examples repository"
     - git clone https://github.com/SonarSource/sonar-scanning-examples.git target_repository
     - echo "Test the ${STAGING_IMAGE_TAG} image"
-    - TEST_IMAGE="${STAGING_IMAGE_TAG}" bats --tap test
+    - TEST_IMAGE="${STAGING_IMAGE_TAG}" ./test/bats/bin/bats --tap test
   depends_on: build
 
 sonar_scan_task:
