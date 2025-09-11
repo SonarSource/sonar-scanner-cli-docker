@@ -15,7 +15,7 @@ env:
   DOCKER_IMAGE: "sonarsource/sonar-scanner-cli"
   STAGING_IMAGE_TAG: "${DOCKER_REPOX_BUILDS_REGISTRY}/${DOCKER_IMAGE}:${CI_BUILD_NUMBER}"
 
-ec2_instance: &EC2_TEMPLATE
+ec2_instance_template: &EC2_TEMPLATE
   experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
   image: docker-builder-v*
   type: t2.xlarge
@@ -72,8 +72,10 @@ latest_mend_task:
     - docker tag "${DOCKER_IMAGE}:latest" "${DOCKER_IMAGE}:latest-from-docker-hub"
     - java -jar wss-unified-agent.jar -c .cirrus/wss-unified-agent.config -apiKey $MEND_API_KEY
 
-test_docker_builder:
+test_task:
   <<: *ONLY_SONARSOURCE_QA
+  ec2_instance:
+    <<: *EC2_TEMPLATE
   submodules_script:
     - git submodule init
     - git submodule update
