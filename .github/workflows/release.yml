@@ -100,7 +100,7 @@ jobs:
           webhook-type: incoming-webhook
           payload: |
             {
-              "channel": "squad-analysis-processing",
+              "channel": "ops-analysis-experience",
               "attachments": [
                 {
                   "color": "#00ff00",
@@ -116,7 +116,7 @@ jobs:
           webhook-type: incoming-webhook
           payload: |
             {
-              "channel": "squad-analysis-processing",
+              "channel": "ops-analysis-experience",
               "attachments": [
                 {
                   "color": "#ff0000",
