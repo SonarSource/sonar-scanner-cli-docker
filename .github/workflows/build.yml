@@ -1,0 +1,144 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+      - 'branch-*'
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+env:
+  DOCKER_REPOX_BUILDS_REGISTRY: repox-sonarsource-docker-builds.jfrog.io
+  DOCKER_IMAGE: "sonarsource/sonar-scanner-cli"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  build:
+    name: Build Docker image
+    runs-on: github-ubuntu-latest-s
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          submodules: 'true'
+
+      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+        with:
+          version: 2025.7.12
+
+      - uses: SonarSource/ci-github-actions/get-build-number@v1
+
+      - name: Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32  # 3.1.0
+        with:
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release access_token | ARTIFACTORY_DEPLOY_PASSWORD;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release username | ARTIFACTORY_DEPLOY_USERNAME;
+
+      - name: Docker login to Repox registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1  # v3.5.0
+        with:
+          registry: ${{ env.DOCKER_REPOX_BUILDS_REGISTRY }}
+          username: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_USERNAME }}
+          password: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_PASSWORD }}
+
+      - name: Setup Docker image
+        shell: bash
+        id: docker-image-setup
+        run: |
+          DOCKER_IMAGE_BUILD_NUMBER="${DOCKER_REPOX_BUILDS_REGISTRY}/${DOCKER_IMAGE}:${BUILD_NUMBER}"
+          echo "docker-image=${DOCKER_IMAGE_BUILD_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        shell: bash
+        env:
+          DOCKER_IMAGE_BUILD_NUMBER: ${{ steps.docker-image-setup.outputs.docker-image }}
+        run: |
+          docker build --tag "${DOCKER_IMAGE_BUILD_NUMBER}" --push .
+
+  test:
+    needs:
+      - build
+    name: Test Docker image
+    runs-on: github-ubuntu-latest-s
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          submodules: 'true'
+
+      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+        with:
+          version: 2025.7.12
+
+      - uses: SonarSource/ci-github-actions/get-build-number@v1
+
+      - name: Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32  # 3.1.0
+        with:
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release access_token | ARTIFACTORY_DEPLOY_PASSWORD;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release username | ARTIFACTORY_DEPLOY_USERNAME;
+
+      - name: Docker login to Repox registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1  # v3.5.0
+        with:
+          registry: ${{ env.DOCKER_REPOX_BUILDS_REGISTRY }}
+          username: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_USERNAME }}
+          password: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_PASSWORD }}
+
+      - name: Setup Docker image
+        shell: bash
+        id: docker-image-setup
+        run: |
+          DOCKER_IMAGE_BUILD_NUMBER="${DOCKER_REPOX_BUILDS_REGISTRY}/${DOCKER_IMAGE}:${BUILD_NUMBER}"
+          echo "docker-image=${DOCKER_IMAGE_BUILD_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Test Docker image
+        shell: bash
+        env:
+          DOCKER_IMAGE_BUILD_NUMBER: ${{ steps.docker-image-setup.outputs.docker-image }}
+        run: |
+          apt-get update && apt-get install -qy curl jq
+          echo "Checking out the sonar-scanning-examples repository"
+          git clone https://github.com/SonarSource/sonar-scanning-examples.git target_repository
+          echo "Test the ${DOCKER_IMAGE_BUILD_NUMBER} image"
+          TEST_IMAGE="${DOCKER_IMAGE_BUILD_NUMBER}" ./test/bats/bin/bats --tap test
+
+  scan:
+    needs:
+      - build
+    runs-on: github-ubuntu-latest-s
+    name: SonarQube Server scan
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          submodules: 'true'
+      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+        with:
+          cache_save: false
+          version: 2025.7.12
+      - name: Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32  # 3.1.0
+        with:
+          secrets: |
+            development/kv/data/next url | NEXT_URL;
+            development/kv/data/next token | NEXT_TOKEN;
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).NEXT_TOKEN }}
+          SONAR_HOST_URL: ${{ fromJSON(steps.secrets.outputs.vault).NEXT_URL }}

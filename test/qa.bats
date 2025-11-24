@@ -76,7 +76,7 @@ EOF
 
     assert_output --partial 'INFO  EXECUTION SUCCESS'
 
-    rm -rf "${tmpDir}"
+    rm -rf "${tmpDir}" || true
 }
 
 @test "ensure we have nodejs installed" {
