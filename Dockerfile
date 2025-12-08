@@ -3,7 +3,7 @@ FROM alpine:3.19 AS builder
 LABEL org.opencontainers.image.url=https://github.com/SonarSource/sonar-scanner-cli-docker
 
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
-ARG SONAR_SCANNER_VERSION=7.3.0.5189
+ARG SONAR_SCANNER_VERSION=8.0.1.6346
 ENV HOME=/tmp \
     XDG_CONFIG_HOME=/tmp \
     SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
@@ -24,7 +24,7 @@ RUN set -eux; \
     gpg --verify /opt/sonar-scanner-cli.zip.asc /opt/sonar-scanner-cli.zip; \
     unzip sonar-scanner-cli.zip; \
     rm sonar-scanner-cli.zip sonar-scanner-cli.zip.asc; \
-    mv sonar-scanner-${SONAR_SCANNER_VERSION} ${SONAR_SCANNER_HOME}; \
+    mv "sonar-scanner-${SONAR_SCANNER_VERSION}" "${SONAR_SCANNER_HOME}"; \
     apk del --purge build-dependencies;
 
 
