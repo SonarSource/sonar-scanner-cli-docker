@@ -17,10 +17,7 @@ ADD ${SCANNER_ZIP_URL}.asc /opt/sonar-scanner-cli.zip.asc
 
 RUN set -eux; \
     apk add --no-cache --virtual build-dependencies gnupg unzip wget; \
-    for server in $(shuf -e hkps://keys.openpgp.org \
-                            hkps://keyserver.ubuntu.com) ; do \
-        gpg --batch --keyserver "${server}" --recv-keys 679F1EE92B19609DE816FDE81DB198F93525EC1A && break || : ; \
-    done; \
+    gpg --batch --keyserver hkps://keyserver.ubuntu.com --recv-keys 679F1EE92B19609DE816FDE81DB198F93525EC1A; \
     gpg --verify /opt/sonar-scanner-cli.zip.asc /opt/sonar-scanner-cli.zip; \
     unzip sonar-scanner-cli.zip; \
     rm sonar-scanner-cli.zip sonar-scanner-cli.zip.asc; \
