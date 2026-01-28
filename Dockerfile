@@ -49,7 +49,7 @@ RUN \
     && dnf clean all \
     && set -eux \
     && groupadd --system --gid 1000 scanner-cli \
-    && useradd --system --uid 1000 --gid scanner-cli scanner-cli \
+    && useradd --system -d "${HOME}" --uid 1000 --gid scanner-cli scanner-cli \
     && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" \
     && mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache" "${SCANNER_WORKDIR_PATH}" \
     && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SCANNER_WORKDIR_PATH}" \
