@@ -47,9 +47,14 @@ jobs:
         with:
           repository: SonarSource/sonar-scanning-examples
           path: target_repository
+      - name: Docker login to Repox registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1  # v3.5.0
+        with:
+          registry: repox-sonarsource-docker-builds.jfrog.io
+          username: ${{ fromJSON(steps.secrets.outputs.vault).repox_username }}
+          password: ${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}
       - name: Pull staged image
         run: |
-          docker login repox-sonarsource-docker-builds.jfrog.io --username ${{ fromJSON(steps.secrets.outputs.vault).repox_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}"
           docker pull "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.buildnumber }}"
       - name: Generate CycloneDX SBOM
         uses: SonarSource/gh-action_sbom@v3
@@ -78,21 +83,23 @@ jobs:
           else
             echo "${docker_image}#${full_image_tag} promoted to ${target_repo_key}"
           fi
-      - name: Push image to Docker Hub
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2  # v3.10.0
+      - name: Docker login to Docker Hub
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1  # v3.5.0
+        with:
+          username: ${{ fromJSON(steps.secrets.outputs.vault).docker_username }}
+          password: ${{ fromJSON(steps.secrets.outputs.vault).docker_access_token }}
+      - name: Push multi-arch image to Docker Hub
+        env:
+          SOURCE_IMAGE: "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.buildnumber }}"
         run: |
-          buildnumber=${{ steps.get_version.outputs.buildnumber }}
-          
-          docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:latest"
-          docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
-          docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
-          docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}"
-
-          docker login --username ${{ fromJSON(steps.secrets.outputs.vault).docker_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).docker_access_token }}"
-
-          docker push sonarsource/sonar-scanner-cli:latest
-          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
-          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
-          docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}
+          docker buildx imagetools create \
+            --tag "sonarsource/sonar-scanner-cli:latest" \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}" \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}" \
+            --tag "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}" \
+            "${SOURCE_IMAGE}"
       - name: Notify success on Slack
         uses: slackapi/slack-github-action@v2.0.0
         with:
