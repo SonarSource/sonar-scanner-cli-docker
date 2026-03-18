@@ -1,4 +1,4 @@
-FROM alpine:3.19 AS builder
+FROM alpine:3.23 AS builder
 
 LABEL org.opencontainers.image.url=https://github.com/SonarSource/sonar-scanner-cli-docker
 
@@ -46,6 +46,8 @@ RUN \
     && dnf install -y tar \
     && dnf install -y nodejs22 \
     && alternatives --set node /usr/bin/node-22 \
+    && dnf install -y python3.13 \
+    && ln -s /usr/bin/python3.13 /usr/local/bin/python3 \
     && dnf clean all \
     && set -eux \
     && groupadd --system --gid 1000 scanner-cli \
