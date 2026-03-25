@@ -35,6 +35,8 @@ ENV HOME=/tmp \
     PATH=${SONAR_SCANNER_HOME}/bin:${PATH} \
     SRC_PATH=/usr/src \
     SCANNER_WORKDIR_PATH=/tmp/.scannerwork \
+    POETRY_CACHE_DIR=/opt/poetry/cache \
+    POETRY_VIRTUALENVS_PATH=/opt/poetry/virtualenvs \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
@@ -48,15 +50,21 @@ RUN \
     && alternatives --set node /usr/bin/node-22 \
     && dnf install -y python3.13 \
     && ln -s /usr/bin/python3.13 /usr/local/bin/python3 \
+    && python3 -m ensurepip --upgrade \
+    && pip3 install --no-cache-dir poetry==2.3.2 \
+    && pip3 cache purge \
     && dnf clean all \
     && set -eux \
     && groupadd --system --gid 1000 scanner-cli \
     && useradd --system -d "${HOME}" --uid 1000 --gid scanner-cli scanner-cli \
     && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" \
     && mkdir -p "${SRC_PATH}" "${SONAR_USER_HOME}" "${SONAR_USER_HOME}/cache" "${SCANNER_WORKDIR_PATH}" \
+       "${POETRY_CACHE_DIR}" "${POETRY_VIRTUALENVS_PATH}" \
     && chown -R scanner-cli:scanner-cli "${SONAR_SCANNER_HOME}" "${SRC_PATH}" "${SCANNER_WORKDIR_PATH}" \
+       "${POETRY_CACHE_DIR}" "${POETRY_VIRTUALENVS_PATH}" \
     && chmod -R 555 "${SONAR_SCANNER_HOME}" \
     && chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}" \
+       "${POETRY_CACHE_DIR}" "${POETRY_VIRTUALENVS_PATH}" \
     # Security updates
     && dnf upgrade -y --releasever=latest --security
 
