@@ -1,9 +1,12 @@
 name: Release
 
 on:
-  release:
-    types:
-      - published
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag (format: {major}.{minor}.{patch}.{build}_{scanner_major}.{scanner_minor}.{scanner_patch})"
+        required: true
+        type: string
 
 jobs:
   release:
@@ -26,27 +29,41 @@ jobs:
             development/kv/data/slack webhook | slack_webhook;
       - name: Get the version
         id: get_version
+        shell: bash
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
         run: |
-          full_image_tag=${{ github.event.release.tag_name }}
-          if [[ ! ${full_image_tag} =~ ^[1-9][0-9]+.[0-9]+.[0-9]+.[0-9]+_[0-9]+.[0-9]+.[0-9]+ ]]; then
+          full_image_tag=$TAG_NAME
+          if [[ ! ${full_image_tag} =~ ^[1-9][0-9]*\.[0-9]+\.[0-9]+\.[0-9]+_[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             echo "The release tag should be in the format of {major}.{minor}.{patch}.{buildnumber}_{scanner_major}.{scanner_minor}.{scanner_patch} but it was ${full_image_tag}"
             exit 1
           fi
-          
+
           IFS=. read docker_major docker_minor docker_patch build_and_scanner <<<"${full_image_tag}"
           IFS=_ read buildnumber scanner_version <<<"${build_and_scanner}"
           echo "major_version=${docker_major}" >> $GITHUB_OUTPUT
           echo "major_minor=${docker_major}.${docker_minor}" >> $GITHUB_OUTPUT
           echo "full_image_tag=${full_image_tag}" >> $GITHUB_OUTPUT
           echo "buildnumber=${buildnumber}" >> $GITHUB_OUTPUT
-        shell: bash
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.release.tag_name }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
         with:
           repository: SonarSource/sonar-scanning-examples
           path: target_repository
+      - name: Create and push release tag
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          if git ls-remote --exit-code --tags origin "$TAG_NAME" > /dev/null 2>&1; then
+            echo "Tag '$TAG_NAME' already exists on origin. To retry, clean up the partial release first:"
+            echo "  1. Delete the tag:    git push origin :refs/tags/$TAG_NAME"
+            echo "  2. If a draft GitHub release exists for '$TAG_NAME', delete it before re-dispatching."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          git push origin "$TAG_NAME"
       - name: Pull staged image
         run: |
           docker login repox-sonarsource-docker-builds.jfrog.io --username ${{ fromJSON(steps.secrets.outputs.vault).repox_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}"
@@ -58,21 +75,23 @@ jobs:
           filename: "sonar-scanner-cli-docker-${{ steps.get_version.outputs.full_image_tag }}-bom.json"
           upload-artifact: true
           upload-release-assets: true
+          release-tag: ${{ inputs.tag_name }}
         env:
           GPG_PRIVATE_KEY_PASSPHRASE: ${{ fromJSON(steps.secrets.outputs.vault).gpg_passphrase }}
           GPG_PRIVATE_KEY_BASE64: ${{ fromJSON(steps.secrets.outputs.vault).gpg_key }}
       - name: Promote the staged build
         env:
           ARTIFACTORY_URL: https://repox.jfrog.io/repox
+          TAG_NAME: ${{ inputs.tag_name }}
         run: |
           source_repo_key=sonarsource-docker-builds
           target_repo_key=sonarsource-docker-releases
           docker_image=sonarsource/sonar-scanner-cli
           buildnumber=${{ steps.get_version.outputs.buildnumber }}
-          full_image_tag=${{ github.event.release.tag_name }}
+          full_image_tag=$TAG_NAME
           DATA_JSON="{ \"targetRepo\": \"${target_repo_key}\", \"dockerRepository\": \"${docker_image}\", \"tag\": \"${buildnumber}\", \"targetTag\": \"${full_image_tag}\", \"copy\": true }"
           HTTP_CODE=$(curl -s -o /dev/null -w %{http_code} -H "Content-Type: application/json" -H "Authorization: Bearer ${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}" -X POST "$ARTIFACTORY_URL/api/docker/$source_repo_key/v2/promote" --data "$DATA_JSON")
-          if [ "$HTTP_CODE" != "200" ]; then
+          if [[ "$HTTP_CODE" != "200" ]]; then
             echo "Cannot promote ${docker_image}#${full_image_tag}: ($HTTP_CODE)"
             exit 1
           else
@@ -81,7 +100,7 @@ jobs:
       - name: Push image to Docker Hub
         run: |
           buildnumber=${{ steps.get_version.outputs.buildnumber }}
-          
+
           docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:latest"
           docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}"
           docker tag "repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:${buildnumber}" "sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}"
@@ -93,6 +112,11 @@ jobs:
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_version }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.major_minor }}
           docker push sonarsource/sonar-scanner-cli:${{ steps.get_version.outputs.full_image_tag }}
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: gh release edit "$TAG_NAME" --draft=false
       - name: Notify success on Slack
         uses: slackapi/slack-github-action@v2.0.0
         with:
@@ -104,7 +128,7 @@ jobs:
               "attachments": [
                 {
                   "color": "#00ff00",
-                  "text": "Release `${{ github.event.release.tag_name }}` successful for `${{ github.repository }}` by `${{ github.actor }}`.\n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
+                  "text": "Release `${{ inputs.tag_name }}` successful for `${{ github.repository }}` by `${{ github.actor }}`.\n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
                 }
               ]
             }
@@ -120,7 +144,7 @@ jobs:
               "attachments": [
                 {
                   "color": "#ff0000",
-                  "text": "Release `${{ github.event.release.tag_name }}` failed for `${{ github.repository }}` by `${{ github.actor }}`.\n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
+                  "text": "Release `${{ inputs.tag_name }}` failed for `${{ github.repository }}` by `${{ github.actor }}`.\n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
                 }
               ]
             }
