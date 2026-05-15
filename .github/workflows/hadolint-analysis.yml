@@ -10,7 +10,7 @@ on:
 jobs:
   v5:
     name: Dockerfile-Linting
-    runs-on: github-ubuntu-latest-s
+    runs-on: warp-custom-ubuntu-24-04
     permissions:
       contents: read
     steps:
