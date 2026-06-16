@@ -124,7 +124,7 @@ jobs:
           webhook-type: incoming-webhook
           payload: |
             {
-              "channel": "ops-analysis-experience",
+              "channel": "ops-ci-experience",
               "attachments": [
                 {
                   "color": "#00ff00",
@@ -140,7 +140,7 @@ jobs:
           webhook-type: incoming-webhook
           payload: |
             {
-              "channel": "ops-analysis-experience",
+              "channel": "ops-ci-experience",
               "attachments": [
                 {
                   "color": "#ff0000",
