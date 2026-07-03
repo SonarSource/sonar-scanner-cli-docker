@@ -25,6 +25,8 @@ jobs:
     name: Build Docker image
     runs-on: github-ubuntu-latest-s
     timeout-minutes: 30
+    outputs:
+      docker-image: ${{ steps.docker-image-setup.outputs.docker-image }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -78,12 +80,6 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
-        with:
-          version: 2025.7.12
-
-      - uses: SonarSource/ci-github-actions/get-build-number@v1
-
       - name: Vault
         id: secrets
         uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32  # 3.1.0
@@ -99,17 +95,18 @@ jobs:
           username: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_USERNAME }}
           password: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_PASSWORD }}
 
-      - name: Setup Docker image
+      - name: Verify pushed image exists
         shell: bash
-        id: docker-image-setup
+        env:
+          DOCKER_IMAGE_BUILD_NUMBER: ${{ needs.build.outputs.docker-image }}
         run: |
-          DOCKER_IMAGE_BUILD_NUMBER="${DOCKER_REPOX_BUILDS_REGISTRY}/${DOCKER_IMAGE}:${BUILD_NUMBER}"
-          echo "docker-image=${DOCKER_IMAGE_BUILD_NUMBER}" >> $GITHUB_OUTPUT
+          docker manifest inspect "${DOCKER_IMAGE_BUILD_NUMBER}" >/dev/null \
+            || { echo "Image not found: ${DOCKER_IMAGE_BUILD_NUMBER}"; exit 1; }
 
       - name: Test Docker image
         shell: bash
         env:
-          DOCKER_IMAGE_BUILD_NUMBER: ${{ steps.docker-image-setup.outputs.docker-image }}
+          DOCKER_IMAGE_BUILD_NUMBER: ${{ needs.build.outputs.docker-image }}
         run: |
           apt-get update && apt-get install -qy curl jq
           echo "Checking out the sonar-scanning-examples repository"
