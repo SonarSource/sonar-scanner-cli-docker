@@ -1,4 +1,4 @@
-FROM alpine:3.23 AS builder
+FROM alpine:3.24 AS builder
 
 LABEL org.opencontainers.image.url=https://github.com/SonarSource/sonar-scanner-cli-docker
 
@@ -51,7 +51,7 @@ RUN \
     && dnf install -y python3.13 \
     && ln -s /usr/bin/python3.13 /usr/local/bin/python3 \
     && python3 -m ensurepip --upgrade \
-    && pip3 install --no-cache-dir --only-binary=poetry poetry==2.3.2 \
+    && pip3 install --no-cache-dir --only-binary=poetry poetry==2.4.3 \
     && pip3 cache purge \
     && dnf clean all \
     && set -eux \
@@ -66,7 +66,8 @@ RUN \
     && chmod -R 754 "${SRC_PATH}" "${SONAR_USER_HOME}" "${SCANNER_WORKDIR_PATH}" \
        "${POETRY_CACHE_DIR}" "${POETRY_VIRTUALENVS_PATH}" \
     # Security updates
-    && dnf upgrade -y --releasever=latest --security
+    && dnf upgrade -y --releasever=latest --security \
+    && dnf clean all
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
