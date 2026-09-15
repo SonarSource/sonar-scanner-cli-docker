@@ -3,7 +3,7 @@ FROM alpine:3.23 AS builder
 LABEL org.opencontainers.image.url=https://github.com/SonarSource/sonar-scanner-cli-docker
 
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
-ARG SONAR_SCANNER_VERSION=8.0.1.6346
+ARG SONAR_SCANNER_VERSION=8.1.0.6389
 ENV HOME=/tmp \
     XDG_CONFIG_HOME=/tmp \
     SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME} \
