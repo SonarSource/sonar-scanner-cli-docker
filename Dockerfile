@@ -70,7 +70,7 @@ RUN \
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
-USER scanner-cli
+USER 1000:1000
 
 WORKDIR ${SRC_PATH}
 
