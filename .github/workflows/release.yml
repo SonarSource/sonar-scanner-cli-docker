@@ -50,20 +50,27 @@ jobs:
         with:
           repository: SonarSource/sonar-scanning-examples
           path: target_repository
-      - name: Create and push release tag
+      - name: Create or reuse draft release
         env:
+          GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ inputs.tag_name }}
         run: |
-          if git ls-remote --exit-code --tags origin "$TAG_NAME" > /dev/null 2>&1; then
-            echo "Tag '$TAG_NAME' already exists on origin. To retry, clean up the partial release first:"
-            echo "  1. Delete the tag:    git push origin :refs/tags/$TAG_NAME"
-            echo "  2. If a draft GitHub release exists for '$TAG_NAME', delete it before re-dispatching."
-            exit 1
+          set -euo pipefail
+          if release_details="$(gh release view "$TAG_NAME" --json id,isDraft 2>/dev/null)"; then
+            release_is_draft=$(jq -r '.isDraft' <<< "$release_details")
+            if [[ "$release_is_draft" == "true" ]]; then
+              echo "Reusing existing draft release $TAG_NAME"
+            else
+              echo "::error::Release $TAG_NAME already exists and is NOT a draft. Aborting to avoid mutating an immutable release."
+              exit 1
+            fi
+          else
+            gh release create "$TAG_NAME" \
+              --draft \
+              --title "Release $TAG_NAME" \
+              --target "$GITHUB_SHA"
+            echo "Created draft release $TAG_NAME"
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
-          git push origin "$TAG_NAME"
       - name: Pull staged image
         run: |
           docker login repox-sonarsource-docker-builds.jfrog.io --username ${{ fromJSON(steps.secrets.outputs.vault).repox_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}"
