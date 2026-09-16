@@ -2,20 +2,5 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>SonarSource/renovate-config"
-  ],
-  "packageRules": [
-    {
-      "description": "Keep the final image on the Corretto 21 LTS line. The JRE the scanner runs on is a product compatibility statement, not a dependency bump (see SCANDOCKER-69 for the 17 -> 21 move), so a major upgrade needs its own ticket and QA. Patch-level JDK fixes and Amazon Linux security errata still reach the image on every rebuild, because the 21-al2023 tag is refreshed upstream continuously and is resolved at build time rather than pinned here.",
-      "matchManagers": [
-        "dockerfile"
-      ],
-      "matchDepNames": [
-        "amazoncorretto"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "enabled": false
-    }
   ]
 }
