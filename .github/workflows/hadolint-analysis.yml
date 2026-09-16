@@ -14,8 +14,8 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Pull HaDoLint image
-      run: docker pull hadolint/hadolint
+      run: docker pull hadolint/hadolint:v2.15.1
     - name: Lint Dockerfile
-      run: docker run --rm --interactive hadolint/hadolint hadolint --ignore DL3018 --ignore DL4001 --ignore DL3013 --ignore SC2015 --ignore DL3008 --ignore DL3041 --ignore DL3020 - < ./Dockerfile
+      run: docker run --rm --interactive hadolint/hadolint:v2.15.1 hadolint --ignore DL3018 --ignore DL4001 --ignore DL3013 --ignore SC2015 --ignore DL3008 --ignore DL3041 --ignore DL3020 - < ./Dockerfile
