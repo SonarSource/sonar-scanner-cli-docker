@@ -46,20 +46,45 @@ jobs:
           echo "full_image_tag=${full_image_tag}" >> $GITHUB_OUTPUT
           echo "buildnumber=${buildnumber}" >> $GITHUB_OUTPUT
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Create and push release tag
+      - name: Create or reuse draft release
         env:
+          GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ inputs.tag_name }}
         run: |
-          if git ls-remote --exit-code --tags origin "$TAG_NAME" > /dev/null 2>&1; then
-            echo "Tag '$TAG_NAME' already exists on origin. To retry, clean up the partial release first:"
-            echo "  1. Delete the tag:    git push origin :refs/tags/$TAG_NAME"
-            echo "  2. If a draft GitHub release exists for '$TAG_NAME', delete it before re-dispatching."
+          set -euo pipefail
+          view_err=$(mktemp)
+          if release_details="$(gh release view "$TAG_NAME" --json isDraft,targetCommitish 2>"$view_err")"; then
+            if [[ "$(jq -r '.isDraft' <<< "$release_details")" != "true" ]]; then
+              echo "::error::Release $TAG_NAME already exists and is NOT a draft. Aborting to avoid mutating an immutable release."
+              exit 1
+            fi
+            draft_target=$(jq -r '.targetCommitish' <<< "$release_details")
+            resolved="$draft_target"
+            if git rev-parse --verify "${draft_target}^{commit}" >/dev/null 2>&1; then
+              resolved=$(git rev-parse "${draft_target}^{commit}")
+            elif git rev-parse --verify "origin/${draft_target}^{commit}" >/dev/null 2>&1; then
+              resolved=$(git rev-parse "origin/${draft_target}^{commit}")
+            fi
+            if [[ "$draft_target" != "$GITHUB_SHA" && "$resolved" != "$GITHUB_SHA" ]]; then
+              echo "::error::Existing draft $TAG_NAME targets $draft_target but this run is $GITHUB_SHA. Delete the draft from the Releases page and re-dispatch, or dispatch from a ref whose HEAD is $draft_target."
+              exit 1
+            fi
+            echo "Reusing existing draft release $TAG_NAME"
+          elif grep -qi 'release not found' "$view_err"; then
+            if git ls-remote --exit-code --tags origin "$TAG_NAME" > /dev/null 2>&1; then
+              echo "::error::Tag $TAG_NAME already exists on origin; publishing would release that ref, not $GITHUB_SHA. Delete it first: git push origin :refs/tags/$TAG_NAME"
+              exit 1
+            fi
+            gh release create "$TAG_NAME" \
+              --draft \
+              --title "Release $TAG_NAME" \
+              --target "$GITHUB_SHA"
+            echo "Created draft release $TAG_NAME"
+          else
+            echo "::error::Failed to query release $TAG_NAME:"
+            cat "$view_err"
             exit 1
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
-          git push origin "$TAG_NAME"
       - name: Pull staged image
         run: |
           docker login repox-sonarsource-docker-builds.jfrog.io --username ${{ fromJSON(steps.secrets.outputs.vault).repox_username }} --password-stdin <<< "${{ fromJSON(steps.secrets.outputs.vault).repox_access_token }}"
