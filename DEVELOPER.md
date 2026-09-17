@@ -69,12 +69,11 @@ docker run -e SONAR_HOST_URL=http://sq:9000 --network="scanner-sq-network" -it -
 ```
 ## Automatic tests
 
-The QA process is handled on `.cirrus.yml`, which is responsible for the following:
+The QA process is handled by GitHub Actions:
 
-- linting the Dockerfile to make sure it complies with best practices
-- build the image
-- test the image by running a scan on a sample project
-- run scans to find potential vulnerabilities
+- `.github/workflows/hadolint-analysis.yml` lints the Dockerfile to make sure it complies with best practices
+- `.github/workflows/build.yml` builds the image and pushes it to the Repox builds registry, tests it by running a
+  scan on a sample project (`test/qa.bats`), and analyzes this repository with SonarQube
 
 ## Releasing
 
