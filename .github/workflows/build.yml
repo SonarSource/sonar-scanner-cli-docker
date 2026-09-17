@@ -28,27 +28,27 @@ jobs:
     outputs:
       docker-image: ${{ steps.docker-image-setup.outputs.docker-image }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           submodules: 'true'
 
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          version: 2025.7.12
+          version: 2026.9.9
 
-      - uses: SonarSource/ci-github-actions/get-build-number@v1
+      - uses: SonarSource/ci-github-actions/get-build-number@v2
 
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32  # 3.1.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e  # 3.6.1
         with:
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release access_token | ARTIFACTORY_DEPLOY_PASSWORD;
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release username | ARTIFACTORY_DEPLOY_USERNAME;
 
       - name: Docker login to Repox registry
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1  # v3.5.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
         with:
           registry: ${{ env.DOCKER_REPOX_BUILDS_REGISTRY }}
           username: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_USERNAME }}
@@ -75,21 +75,21 @@ jobs:
     runs-on: github-ubuntu-latest-s
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           submodules: 'true'
 
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32  # 3.1.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e  # 3.6.1
         with:
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release access_token | ARTIFACTORY_DEPLOY_PASSWORD;
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release username | ARTIFACTORY_DEPLOY_USERNAME;
 
       - name: Docker login to Repox registry
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1  # v3.5.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
         with:
           registry: ${{ env.DOCKER_REPOX_BUILDS_REGISTRY }}
           username: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_USERNAME }}
@@ -120,22 +120,22 @@ jobs:
     runs-on: github-ubuntu-latest-s
     name: SonarQube Server scan
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: 'true'
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           cache_save: false
-          version: 2025.7.12
+          version: 2026.9.9
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32  # 3.1.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e  # 3.6.1
         with:
           secrets: |
             development/kv/data/next url | NEXT_URL;
             development/kv/data/next token | NEXT_TOKEN;
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).NEXT_TOKEN }}
           SONAR_HOST_URL: ${{ fromJSON(steps.secrets.outputs.vault).NEXT_URL }}
