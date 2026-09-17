@@ -86,18 +86,15 @@ Releases are triggered manually through the `Release` workflow (`.github/workflo
 2. Click **Run workflow** and select the branch to release from (see [Branch to dispatch from](#branch-to-dispatch-from) below).
 3. Provide the `tag_name` input in the format `{major}.{minor}.{patch}.{build}_{scanner_major}.{scanner_minor}.{scanner_patch}` (e.g. `4.8.0.2699_6.2.1`).
 
-The workflow validates the tag format, creates and pushes the git tag at HEAD of the dispatched branch, generates the SBOM, promotes the staged Docker image, pushes it to Docker Hub, and finally publishes the GitHub release.
+The workflow validates the tag format, creates (or reuses) a draft GitHub release targeting the dispatched commit, generates the SBOM, promotes the staged Docker image, pushes it to Docker Hub, and finally publishes the GitHub release — which is what creates the git tag.
 
 ### Branch to dispatch from
 
-The git tag is created at HEAD of the branch the workflow is dispatched from. Choose the branch accordingly:
+The draft release (and, on publish, the git tag) targets HEAD of the branch the workflow is dispatched from. Choose the branch accordingly:
 
 - **Latest release**: dispatch from `master`.
 - **Maintenance release on a long-lived branch** (e.g. `branch-4.8`): dispatch from that `branch-*` branch, **not** from `master`. Dispatching from `master` would tag a commit that does not belong to the maintenance line.
 
 ### Recovering from a failed release
 
-If the workflow fails after the git tag has been pushed, re-dispatching with the same tag will fail at the pre-flight check. To recover:
-
-1. Delete the tag from the remote: `git push origin :refs/tags/<TAG_NAME>`
-2. If a draft GitHub release was created for that tag, delete it from the [Releases page](../../releases) before re-dispatching.
+If the workflow fails before the release is published, simply re-dispatch with the same tag: the existing draft release is reused and no tag exists yet. If the release was already published, the tag and release are immutable — release a new tag instead.
