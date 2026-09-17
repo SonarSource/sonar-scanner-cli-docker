@@ -45,11 +45,7 @@ jobs:
           echo "major_minor=${docker_major}.${docker_minor}" >> $GITHUB_OUTPUT
           echo "full_image_tag=${full_image_tag}" >> $GITHUB_OUTPUT
           echo "buildnumber=${buildnumber}" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
-        with:
-          repository: SonarSource/sonar-scanning-examples
-          path: target_repository
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Create and push release tag
         env:
           TAG_NAME: ${{ inputs.tag_name }}
@@ -118,7 +114,7 @@ jobs:
           TAG_NAME: ${{ inputs.tag_name }}
         run: gh release edit "$TAG_NAME" --draft=false
       - name: Notify success on Slack
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
@@ -133,7 +129,7 @@ jobs:
               ]
             }
       - name: Notify failures on Slack
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         if: failure()
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
