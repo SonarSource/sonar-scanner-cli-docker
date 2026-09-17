@@ -97,4 +97,4 @@ The draft release (and, on publish, the git tag) targets HEAD of the branch the 
 
 ### Recovering from a failed release
 
-If the workflow fails before the release is published, simply re-dispatch with the same tag: the existing draft release is reused and no tag exists yet. If the release was already published, the tag and release are immutable — release a new tag instead.
+If the workflow fails before the release is published, re-dispatch with the same tag from the **same commit** so the existing draft is reused. If the dispatch branch has moved, delete the draft from the [Releases page](../../releases) first, then re-dispatch. `workflow_dispatch` cannot target a raw SHA. If the release was already published, the tag and release are immutable — release a new tag instead.

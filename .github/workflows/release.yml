@@ -66,7 +66,7 @@ jobs:
               resolved=$(git rev-parse "origin/${draft_target}^{commit}")
             fi
             if [[ "$draft_target" != "$GITHUB_SHA" && "$resolved" != "$GITHUB_SHA" ]]; then
-              echo "::error::Existing draft $TAG_NAME targets $draft_target but this run is $GITHUB_SHA. Delete the draft or re-dispatch from $draft_target."
+              echo "::error::Existing draft $TAG_NAME targets $draft_target but this run is $GITHUB_SHA. Delete the draft from the Releases page and re-dispatch, or dispatch from a ref whose HEAD is $draft_target."
               exit 1
             fi
             echo "Reusing existing draft release $TAG_NAME"
