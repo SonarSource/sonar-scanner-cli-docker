@@ -35,7 +35,7 @@ jobs:
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          version: 2026.9.9
+          version: 2026.10.10
 
       - uses: SonarSource/ci-github-actions/get-build-number@v2
 
@@ -126,7 +126,7 @@ jobs:
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           cache_save: false
-          version: 2026.9.9
+          version: 2026.10.10
       - name: Vault
         id: secrets
         uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e  # 3.6.1
