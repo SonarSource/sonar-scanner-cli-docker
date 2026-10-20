@@ -1,9 +1,23 @@
-# SonarScanner CLI [![Build Status](https://github.com/SonarSource/sonar-scanner-cli-docker/actions/workflows/build.yml/badge.svg)](https://github.com/SonarSource/sonar-scanner-cli-docker/actions/workflows/build.yml)
+<!-- Sonar Marketing hosts these approved brand assets on its Kentico Kontent CDN (assets-eu-01.kc-usercontent.com). Shared URLs are intentional; consult Marketing before replacing them. -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://assets-eu-01.kc-usercontent.com/ef593040-b591-0198-9506-ed88b30bc023/a23fc7ba-23f0-489a-829d-ed88c0748521/Sonar_Logo_Dark%20Backgrounds.svg">
+    <img src="https://assets-eu-01.kc-usercontent.com/ef593040-b591-0198-9506-ed88b30bc023/82c13eba-d95c-4bb8-8007-7ce77c14e043/Sonar_Logo_Light%20Backgrounds.svg" alt="Sonar logo" width="400">
+  </picture>
+</p>
 
-This is the Git repository that contains the source for [SonarScanner CLI](https://github.com/SonarSource/sonar-scanner-cli) Docker images.
-Images are available on [Docker Hub](https://hub.docker.com/r/sonarsource/sonar-scanner-cli).
+[![Build Status](https://github.com/SonarSource/sonar-scanner-cli-docker/actions/workflows/build.yml/badge.svg)](https://github.com/SonarSource/sonar-scanner-cli-docker/actions/workflows/build.yml)
 
-Sonar's [Clean Code solutions](https://www.sonarsource.com/solutions/clean-code/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-scanner-cli-docker) help developers deliver high-quality, efficient code standards that benefit the entire team or organization. 
+<!-- sonar-marketing:start -->
+<!-- Marketing maintains this section. For wording changes, consult the relevant Product Marketing Manager (PMM). Repository CODEOWNERS review accuracy and merge changes. -->
+
+# SonarScanner CLI Docker images
+
+This repository contains the source for the official SonarScanner CLI Docker images. The images let projects run SonarQube analysis without installing the scanner directly on the host.
+
+Get the images from [Docker Hub](https://hub.docker.com/r/sonarsource/sonar-scanner-cli), read the [SonarScanner CLI documentation](https://docs.sonarsource.com/sonarqube-server/analyzing-source-code/scanners/sonarscanner), or learn more about the [SonarQube product family](https://www.sonarsource.com/products/sonarqube/).
+
+<!-- sonar-marketing:end -->
 
 NB: These Docker images are not compatible with C# and Objective-C projects. For C&C++, the docker images are only compatible with [AutoConfig mode](https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/languages/c-family/analysis-modes/).
 
