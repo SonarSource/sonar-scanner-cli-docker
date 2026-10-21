@@ -1,0 +1,20 @@
+# SCANDOCKER-91: OS vulnerability policy adapted from SonarSource/docker-sonarqube.
+# Enforcement uses evaluate-trivy-report.py; keep every severity in the JSON report.
+scan:
+  scanners:
+    - vuln
+  show-suppressed: true
+pkg:
+  # Scan OS packages only, as in docker-sonarqube's image validation.
+  types:
+    - os
+vulnerability:
+  ignore-unfixed: true
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+ignorefile: .trivyignore.yaml
+timeout: 10m

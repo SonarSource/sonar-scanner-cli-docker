@@ -73,7 +73,51 @@ The QA process is handled by GitHub Actions:
 
 - `.github/workflows/hadolint-analysis.yml` lints the Dockerfile to make sure it complies with best practices
 - `.github/workflows/build.yml` builds the image and pushes it to the Repox builds registry, tests it by running a
-  scan on a sample project (`test/qa.bats`), and analyzes this repository with SonarQube
+  scan on a sample project (`test/qa.bats`), validates it with Trivy, and analyzes this repository with SonarQube
+
+### Docker image vulnerability validation (SCANDOCKER-91)
+
+The build workflow scans the image identified by `needs.build.outputs.docker-image` in Repox.
+The standalone `Trivy analysis` workflow (`.github/workflows/trivy-analysis.yml`) scans an image selected
+manually. Both workflows use `.github/actions/trivy-scan` and `.github/trivy.yaml`.
+The release workflow runs independently and does not invoke Trivy or depend on its result.
+
+To trigger an analysis manually, open **Actions → Trivy analysis → Run workflow**, select the branch
+containing the scan configuration, and enter the full `image-ref`. For a staged release candidate, use
+`repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:<build>`, replacing `<build>` with
+the build number from the release tag. The workflow authenticates to Repox and scans that existing image
+without rebuilding it. Review the run's result and its `trivy-results` artifact; policy violations fail
+only the analysis run and do not block the release workflow.
+
+The implementation follows the production mechanism found by searching SonarSource's GitHub organization
+for `trivy` and `aquasecurity`, including workflow files. Among the indexed repositories accessible to the
+search, [docker-sonarqube's workflow](https://github.com/SonarSource/docker-sonarqube/blob/e53552b18ffc641a8481bb07e6747c8db29624ed/.github/workflows/push_and_pr.yml)
+was the production image-validation implementation; other matches were primarily analyzer test corpora,
+training reports, and documentation. No shared Trivy action was found in `ci-github-actions`.
+
+The [CVSS evaluator](https://github.com/SonarSource/docker-sonarqube/blob/e53552b18ffc641a8481bb07e6747c8db29624ed/.github/workflows/scripts/evaluate-trivy-report.py)
+is copied from that revision. The policy is:
+
+- Scan OS packages, excluding application dependencies such as JARs, npm packages, and Python packages.
+- Ignore vulnerabilities without an upstream fix.
+- Prefer NVD CVSS v4, then v3, then v2; otherwise use the highest score from other sources, then Trivy severity.
+- Fail on Medium, High, Critical, or Unknown findings. Low and a real CVSS score of zero pass.
+- Allow temporary exceptions in `.trivyignore.yaml`, documented with an owner, justification, ticket, and
+  `expired_at` date. Trivy applies the exceptions and restores expired findings to the policy evaluation.
+  This repository starts with no exceptions; docker-sonarqube's image-specific exceptions are not copied.
+
+JSON reports include all severity levels and suppressed findings. SARIF is converted from the same JSON report.
+Both reports are uploaded as the `trivy-results` workflow artifact even when the policy fails. SARIF results
+are also uploaded to GitHub Security for internal PRs, pushes, merge groups, and manual runs; fork PRs retain
+the report artifact without attempting the privileged Security upload. The CVSS evaluator determines the
+validation result; GitHub Security may display a different severity based on Trivy's vendor data.
+
+To scan a locally built image with Trivy installed:
+
+```bash
+trivy image --config .github/trivy.yaml --format json --output /tmp/trivy-results.json scanner-cli-local
+python3 .github/workflows/scripts/evaluate-trivy-report.py /tmp/trivy-results.json
+```
 
 ## Releasing
 
