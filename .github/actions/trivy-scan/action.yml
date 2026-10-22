@@ -22,6 +22,7 @@ runs:
 
     - name: Generate HTML report
       if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
+      continue-on-error: true # Convenience report; failures must not change the policy result.
       shell: bash
       run: |
         set -euo pipefail

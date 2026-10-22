@@ -93,14 +93,14 @@ the build number from the release tag. The workflow authenticates when scanning 
 without rebuilding it. Review the run's result and its `trivy-results` artifact; policy violations fail
 only the analysis run and do not block the release workflow.
 
-Before `Trivy analysis` is merged into the default branch, use the existing `Build` workflow's
-optional `image-ref` input to validate a published image from the PR branch. This skips building,
+The `Build` workflow also accepts an optional `image-ref` input to validate a published image.
+Select a branch containing the desired scan configuration. This skips building,
 integration tests, and SonarQube analysis and runs image validation against that exact reference:
 
 ```bash
 gh workflow run build.yml \
   --repo SonarSource/sonar-scanner-cli-docker \
-  --ref alban/SCANDOCKER-91 \
+  --ref master \
   -f image-ref=sonarsource/sonar-scanner-cli:12.2.0.4256_8.1.0
 ```
 
@@ -138,12 +138,17 @@ of the findings that cause failure, including advisory links, installed/fixed ve
 Up to 200 failing findings are displayed; all findings remain in the artifacts.
 The job summary also links to the artifact: download it and open `trivy-results.html` in a browser
 for tables of packages, vulnerability IDs, severities, installed/fixed versions, and advisory links.
+HTML generation is best effort: a template download or rendering failure does not fail validation.
 The HTML uses Trivy's official v0.70.0 template pinned to its release commit. Suppressed findings remain
 available in the JSON and evaluator logs; the upstream HTML template lists active vulnerabilities and
 does not display secret findings. JSON and SARIF retain the secret results. SARIF results are also
 uploaded to GitHub Security for internal PRs, pushes, merge groups, and manual runs; fork PRs retain
 the report artifact without attempting the privileged Security upload. The CVSS evaluator determines the
 validation result; HTML and GitHub Security may display a different severity based on Trivy's vendor data.
+
+The SonarQube scan job runs the evaluator's unit tests and imports their Python coverage report.
+To run the policy tests locally, use `python3 -m unittest discover -s test/trivy -v`.
+They cover score precedence, policy thresholds, exceptions, CLI exit codes, and summary rendering.
 
 To scan a locally built image with Trivy installed:
 
