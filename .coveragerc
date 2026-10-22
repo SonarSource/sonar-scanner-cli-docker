@@ -1,0 +1,10 @@
+[run]
+branch = True
+relative_files = True
+source = .github/workflows/scripts
+
+[report]
+fail_under = 90
+
+[xml]
+output = coverage.xml
