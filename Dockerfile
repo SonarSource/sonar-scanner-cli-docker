@@ -51,7 +51,7 @@ RUN \
     && dnf install -y python3.13 \
     && ln -s /usr/bin/python3.13 /usr/local/bin/python3 \
     && python3 -m ensurepip --upgrade \
-    && python3 -m pip install --no-cache-dir --upgrade pip==26.2.2 \
+    && python3 -m pip install --no-cache-dir --only-binary=:all: --upgrade pip==26.2.2 \
     && pip3 install --no-cache-dir --only-binary=poetry poetry==2.4.3 \
     && pip3 cache purge \
     && dnf clean all \
