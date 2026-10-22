@@ -1,0 +1,39 @@
+name: Trivy analysis
+run-name: 'Trivy analysis: ${{ inputs.image-ref }}'
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-ref:
+        description: 'Full image reference to scan (e.g. repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:<build>)'
+        required: true
+        type: string
+
+jobs:
+  trivy-scan:
+    name: Validate Docker image with Trivy
+    runs-on: github-ubuntu-latest-s
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@a7fa5fd4a4e4e0f2593f6137c0812cac196cf4ce # 3.7.0
+        with:
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release access_token | ARTIFACTORY_DEPLOY_PASSWORD;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release username | ARTIFACTORY_DEPLOY_USERNAME;
+      - name: Docker login to Repox registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: repox-sonarsource-docker-builds.jfrog.io
+          username: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_USERNAME }}
+          password: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_PASSWORD }}
+      - name: Validate selected image
+        uses: ./.github/actions/trivy-scan
+        with:
+          image-ref: ${{ inputs.image-ref }}

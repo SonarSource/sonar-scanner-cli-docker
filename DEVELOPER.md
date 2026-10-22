@@ -73,7 +73,104 @@ The QA process is handled by GitHub Actions:
 
 - `.github/workflows/hadolint-analysis.yml` lints the Dockerfile to make sure it complies with best practices
 - `.github/workflows/build.yml` builds the image and pushes it to the Repox builds registry, tests it by running a
-  scan on a sample project (`test/qa.bats`), and analyzes this repository with SonarQube
+  scan on a sample project (`test/qa.bats`), validates it with Trivy, and analyzes this repository with SonarQube
+
+### Docker image vulnerability validation
+
+The build workflow scans the image identified by `needs.build.outputs.docker-image` in Repox.
+The standalone `Trivy analysis` workflow (`.github/workflows/trivy-analysis.yml`) scans an image selected
+manually. Both workflows use `.github/actions/trivy-scan` and `.github/trivy.yaml`.
+Both also run an offline eMudhra certificate-trust regression check inside the selected image.
+The release workflow runs independently and does not invoke these checks or depend on their results.
+
+To trigger an analysis manually, open **Actions → Trivy analysis → Run workflow**, select the branch
+containing the scan configuration, and enter the full `image-ref`. For a staged release candidate, use
+`repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:<build>`, replacing `<build>` with
+the build number from the release tag. The workflow authenticates to Repox and scans that existing image
+without rebuilding it. Review the run's result and its `trivy-results` artifact; policy violations fail
+only the analysis run and do not block the release workflow.
+
+Before `Trivy analysis` is merged into the default branch, use the existing `Build` workflow's
+optional `image-ref` input to validate a published image from the PR branch. This skips building,
+integration tests, and SonarQube analysis and runs image validation against that exact reference:
+
+```bash
+gh workflow run build.yml \
+  --repo SonarSource/sonar-scanner-cli-docker \
+  --ref alban/SCANDOCKER-91 \
+  -f image-ref=sonarsource/sonar-scanner-cli:12.2.0.4256_8.1.0
+```
+
+Omit `image-ref` to keep the normal build-and-validate behavior.
+
+The implementation follows the production mechanism found by searching SonarSource's GitHub organization
+for `trivy` and `aquasecurity`, including workflow files. Among the indexed repositories accessible to the
+search, [docker-sonarqube's workflow](https://github.com/SonarSource/docker-sonarqube/blob/e53552b18ffc641a8481bb07e6747c8db29624ed/.github/workflows/push_and_pr.yml)
+was the production image-validation implementation; other matches were primarily analyzer test corpora,
+training reports, and documentation. No shared Trivy action was found in `ci-github-actions`.
+
+The [CVSS evaluator](https://github.com/SonarSource/docker-sonarqube/blob/e53552b18ffc641a8481bb07e6747c8db29624ed/.github/workflows/scripts/evaluate-trivy-report.py)
+is adapted from that revision. The policy is:
+
+- Scan OS packages and application dependencies, including Python packages, JARs, and npm packages.
+- Include vulnerabilities without an upstream fix so they remain visible and enter policy evaluation.
+- Prefer NVD CVSS v4, then v3, then v2; otherwise use the highest score from other sources, then Trivy severity.
+- Fail on Medium, High, Critical, or Unknown findings. Low and a real CVSS score of zero pass.
+- Allow temporary exceptions in `.trivyignore.yaml`, documented with an owner, justification, ticket, and
+  `expired_at` date. Trivy applies the exceptions and restores expired findings to the policy evaluation.
+  This repository starts with no exceptions; docker-sonarqube's image-specific exceptions are not copied.
+
+JSON reports include all severity levels and suppressed findings. SARIF is converted from the same JSON report.
+Both reports are uploaded as the `trivy-results` workflow artifact even when the policy fails. SARIF results
+are also uploaded to GitHub Security for internal PRs, pushes, merge groups, and manual runs; fork PRs retain
+the report artifact without attempting the privileged Security upload. The CVSS evaluator determines the
+validation result; GitHub Security may display a different severity based on Trivy's vendor data.
+The same artifact includes `emudhra-results.txt`, containing the certificate-trust check's output.
+
+To scan a locally built image with Trivy installed:
+
+```bash
+trivy image --config .github/trivy.yaml --format json --output /tmp/trivy-results.json scanner-cli-local
+python3 .github/workflows/scripts/evaluate-trivy-report.py /tmp/trivy-results.json
+```
+
+### Certificate-trust incident checks
+
+The [October 2026 eMudhra incident](https://blog.cloudflare.com/emudhra-certificate-compromise/)
+requires checking certificate trust as well as dependency advisories. A clean Trivy report does not
+establish that a TLS client rejects compromised intermediate certificates. Python's standalone certifi,
+pip's vendored certifi, the OS CA bundle, Java, and Node.js can use different trust stores.
+
+`test/emudhra` contains twelve public TLS certificate chains from the
+[incident checker](https://emudhra.we-have-a-problem.com/), their original roots, and offline regression checks.
+The Python check verifies the system, standalone certifi, pip-vendored certifi, and Node default CA bundles
+with OpenSSL. Java is checked separately using its default `X509TrustManager`, including Java's certificate
+blocklist behavior. Node's check tests its exported default CA bundle, not a live Node TLS handshake.
+Custom trust configurations supplied by downstream users and certificates downloaded later by analyzers
+are outside this check's scope.
+
+The checks fail if any tested store accepts a compromised chain. Each chain must first validate against
+the original roots as a positive control. Missing tools, invalid fixture checksums, and expired fixtures
+cause errors rather than being interpreted as successful distrust. The container has networking disabled;
+neither checker availability nor DNS/TLS interception can make these tests pass. Refresh the fixtures from
+the documented source before their leaf certificates expire in May 2027.
+
+Run the same check locally against an existing image:
+
+```bash
+set -o pipefail
+COPYFILE_DISABLE=1 tar -C test/emudhra -cf - . | docker run --rm -i --network none \
+  --entrypoint /bin/sh scanner-cli-local -c '
+    set -eu
+    work_dir=$(mktemp -d)
+    tar -xf - -C "$work_dir"
+    python3 "$work_dir/check-trust.py"
+  '
+```
+
+Updating pip or Homebrew on the developer's machine does not update the image. Rebuild with patched
+container packages/base images and redeploy, then rerun these checks against the exact staged image.
+Do not disable TLS verification to work around certificate errors.
 
 ## Releasing
 
