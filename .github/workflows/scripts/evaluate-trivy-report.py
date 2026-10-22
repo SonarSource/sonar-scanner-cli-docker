@@ -26,11 +26,14 @@ Not GitHub Actions-specific: run directly against any Trivy JSON report file.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
+import html
 import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlsplit
 
 NVD_SOURCE = "nvd"
 
@@ -68,6 +71,9 @@ class Finding:
     band: str
     score_display: str
     source: str
+    installed_version: str = ""
+    fixed_version: str = ""
+    advisory_url: str = ""
 
     @property
     def is_violation(self) -> bool:
@@ -78,6 +84,7 @@ class Finding:
 class ReportResult:
     findings: list[Finding] = field(default_factory=list)
     suppressed: list[tuple[str, dict[str, Any]]] = field(default_factory=list)
+    artifact: str = ""
 
     @property
     def violations(self) -> list[Finding]:
@@ -161,6 +168,9 @@ def evaluate_finding(target: str, vuln: dict[str, Any]) -> Finding:
         band=band,
         score_display=score_display,
         source=source,
+        installed_version=vuln.get("InstalledVersion") or "",
+        fixed_version=vuln.get("FixedVersion") or "",
+        advisory_url=vuln.get("PrimaryURL") or "",
     )
 
 
@@ -181,7 +191,77 @@ def evaluate_report(report: dict[str, Any]) -> ReportResult:
             for entry in result.get(suppressed_field) or []:
                 suppressed.append((target, entry))
 
-    return ReportResult(findings=findings, suppressed=suppressed)
+    return ReportResult(findings=findings, suppressed=suppressed, artifact=report.get("ArtifactName") or "")
+
+
+def _summary_text(value: str) -> str:
+    # Keep arbitrary package metadata from breaking Markdown tables/HTML.
+    # Bound cells and rows to stay below GitHub's 1 MiB per-step summary limit.
+    value = str(value).replace("\r", " ").replace("\n", " ")
+    if len(value) > 80:
+        value = value[:77] + "..."
+    return html.escape(value, quote=True).replace("|", "&#124;")
+
+
+def format_summary(result: ReportResult) -> str:
+    violations = result.violations
+    counts = Counter(f.band for f in violations)
+    lines = [
+        "## Trivy vulnerability policy: " + ("FAILED" if violations else "PASSED"),
+        "",
+        f"**{len(violations)} finding(s) cause policy failure.** "
+        f"{len(result.findings) - len(violations)} non-blocking; {len(result.suppressed)} suppressed.",
+        "",
+        "| Critical | High | Medium | Unknown |",
+        "| --- | --- | --- | --- |",
+        "| " + " | ".join(str(counts[b]) for b in ("CRITICAL", "HIGH", "MEDIUM", "UNKNOWN")) + " |",
+        "",
+        "Ratings below are the CVSS policy's ratings, which can differ from Trivy's vendor severity. "
+        "Low/NONE findings and suppressed exceptions do not cause policy failure. "
+        "Full HTML, JSON and SARIF reports are available in the workflow artifacts.",
+        "",
+    ]
+    if result.artifact:
+        lines[2:2] = [f"**Image:** <code>{_summary_text(result.artifact)}</code>", ""]
+    remaining = 200
+    for band in ("CRITICAL", "HIGH", "MEDIUM", "UNKNOWN"):
+        findings = sorted(
+            (f for f in violations if f.band == band),
+            key=lambda f: (f.target, f.package, f.id),
+        )[:remaining]
+        if not findings:
+            continue
+        lines.extend([f"<details open><summary>{band}: {counts[band]} failing finding(s)</summary>", ""])
+        for target in dict.fromkeys(f.target for f in findings):
+            lines.extend([
+                f"**Target:** <code>{_summary_text(target)}</code>", "",
+                "| Package | Advisory | Installed | Fixed | Score | Score source |",
+                "| --- | --- | --- | --- | --- | --- |",
+            ])
+            for finding in (f for f in findings if f.target == target):
+                advisory = _summary_text(finding.id)
+                # Only render HTTP(S) links; never turn metadata into executable URLs.
+                try:
+                    url = urlsplit(finding.advisory_url)
+                except ValueError:
+                    url = None
+                if (url and url.scheme in ("http", "https") and url.netloc
+                        and len(finding.advisory_url) <= 256
+                        and not any(c in finding.advisory_url for c in "\r\n|")):
+                    advisory = f'<a href="{html.escape(finding.advisory_url, quote=True)}">{advisory}</a>'
+                cells = [
+                    _summary_text(finding.package), advisory,
+                    _summary_text(finding.installed_version),
+                    _summary_text(finding.fixed_version or "Not available"),
+                    _summary_text(finding.score_display), _summary_text(finding.source),
+                ]
+                lines.append("| " + " | ".join(cells) + " |")
+            lines.append("")
+        lines.extend(["</details>", ""])
+        remaining -= len(findings)
+    if len(violations) > 200:
+        lines.extend(["Only the first 200 failing findings are shown. See the artifacts for the complete report.", ""])
+    return "\n".join(lines) + "\n"
 
 
 def _format_finding(finding: Finding) -> str:
@@ -222,6 +302,11 @@ def evaluate_path(path: Path) -> ReportResult:
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--summary",
+        type=Path,
+        help="Append a Markdown summary of policy failures to this file (e.g. GITHUB_STEP_SUMMARY).",
+    )
+    parser.add_argument(
         "reports",
         nargs="+",
         type=Path,
@@ -234,6 +319,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     for report_path in args.reports:
         print(f"== Evaluating {report_path} ==")
         result = evaluate_path(report_path)
+        if args.summary:
+            with args.summary.open("a", encoding="utf-8") as summary:
+                summary.write(format_summary(result))
 
         if result.suppressed:
             print(f"-- {len(result.suppressed)} suppressed finding(s) (governed, unexpired) --")
