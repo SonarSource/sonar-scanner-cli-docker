@@ -78,14 +78,18 @@ The QA process is handled by GitHub Actions:
 ### Docker image vulnerability validation
 
 The build workflow scans the image identified by `needs.build.outputs.docker-image` in Repox.
-The standalone `Trivy analysis` workflow (`.github/workflows/trivy-analysis.yml`) scans an image selected
-manually. Both workflows use `.github/actions/trivy-scan` and `.github/trivy.yaml`.
+The standalone `Trivy analysis` workflow (`.github/workflows/trivy-analysis.yml`) scans the latest
+release published to Docker Hub (`sonarsource/sonar-scanner-cli:latest`) Monday–Friday at 01:15 UTC
+(`15 1 * * 1-5`). The schedule becomes active once the workflow is merged into the default branch.
+It scans the existing published image without rebuilding it and produces the same run summary and
+report artifacts as a manual scan. It also supports manually selecting an image, defaulting to
+the Docker Hub `latest` tag. Both workflows use `.github/actions/trivy-scan` and `.github/trivy.yaml`.
 The release workflow runs independently and does not invoke Trivy or depend on its result.
 
 To trigger an analysis manually, open **Actions → Trivy analysis → Run workflow**, select the branch
 containing the scan configuration, and enter the full `image-ref`. For a staged release candidate, use
 `repox-sonarsource-docker-builds.jfrog.io/sonarsource/sonar-scanner-cli:<build>`, replacing `<build>` with
-the build number from the release tag. The workflow authenticates to Repox and scans that existing image
+the build number from the release tag. The workflow authenticates when scanning Repox and scans that existing image
 without rebuilding it. Review the run's result and its `trivy-results` artifact; policy violations fail
 only the analysis run and do not block the release workflow.
 
