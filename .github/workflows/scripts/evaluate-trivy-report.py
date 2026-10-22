@@ -245,7 +245,7 @@ def format_summary(result: ReportResult, advisory: bool = False) -> str:
     lines = [
         "## Trivy vulnerability policy: " + status,
         "",
-        f"**{len(violations)} finding(s) cause policy failure.** "
+        f"**{len(violations)} finding(s) violate the policy.** "
         f"{len(result.findings) - len(violations)} non-blocking; {len(result.suppressed)} suppressed.",
         "",
         "| Critical | High | Medium | Unknown |",
@@ -258,10 +258,13 @@ def format_summary(result: ReportResult, advisory: bool = False) -> str:
         "",
     ]
     if advisory:
+        note = "> Advisory scan: vulnerability policy violations do not block this PR."
+        if violations:
+            note += " The findings remain unresolved."
+        note += " Manual, scheduled, and branch scans enforce the policy."
         lines.extend([
             "> [!WARNING]" if violations else "> [!NOTE]",
-            "> Advisory scan: vulnerability policy violations do not block this PR. "
-            "The findings remain unresolved. Manual, scheduled, and branch scans enforce the policy.",
+            note,
             "",
         ])
     if result.artifact:

@@ -43,7 +43,10 @@ jobs:
         with:
           version: 2026.10.15
 
-      - uses: SonarSource/ci-github-actions/get-build-number@v2
+      - name: Configure Repox PyPI and build number
+        uses: SonarSource/ci-github-actions/config-pip@62463382a24f2004ffa20adbe9985f6459e031e6 # v2
+        with:
+          disable-caching: 'true'
 
       - name: Vault
         id: secrets
@@ -72,7 +75,8 @@ jobs:
         env:
           DOCKER_IMAGE_BUILD_NUMBER: ${{ steps.docker-image-setup.outputs.docker-image }}
         run: |
-          docker build --tag "${DOCKER_IMAGE_BUILD_NUMBER}" --push .
+          docker build --secret "id=pip_config,src=$HOME/.pip/pip.conf" \
+            --tag "${DOCKER_IMAGE_BUILD_NUMBER}" --push .
 
   test:
     needs:
@@ -176,10 +180,14 @@ jobs:
           secrets: |
             development/kv/data/next url | NEXT_URL;
             development/kv/data/next token | NEXT_TOKEN;
+      - name: Configure Repox PyPI for policy tests
+        uses: SonarSource/ci-github-actions/config-pip@62463382a24f2004ffa20adbe9985f6459e031e6 # v2
+        with:
+          disable-caching: 'true'
       - name: Test Trivy policy and generate coverage
         run: |
           python3 -m venv "$RUNNER_TEMP/trivy-policy-tests"
-          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m pip install --disable-pip-version-check coverage==7.16.2
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: coverage==7.16.2
           "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage run -m unittest discover -s test/trivy -v
           "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage report
           "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage xml
