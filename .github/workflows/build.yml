@@ -46,6 +46,7 @@ jobs:
       - name: Configure Repox PyPI and build number
         uses: SonarSource/ci-github-actions/config-pip@62463382a24f2004ffa20adbe9985f6459e031e6 # v2
         with:
+          artifactory-reader-role: docker-release
           disable-caching: 'true'
 
       - name: Vault
@@ -183,6 +184,7 @@ jobs:
       - name: Configure Repox PyPI for policy tests
         uses: SonarSource/ci-github-actions/config-pip@62463382a24f2004ffa20adbe9985f6459e031e6 # v2
         with:
+          artifactory-reader-role: docker-release
           disable-caching: 'true'
       - name: Test Trivy policy and generate coverage
         run: |
