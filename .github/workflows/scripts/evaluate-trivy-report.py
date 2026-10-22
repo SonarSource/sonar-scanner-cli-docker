@@ -206,7 +206,9 @@ def _summary_text(value: str) -> str:
 def format_summary(result: ReportResult, advisory: bool = False) -> str:
     violations = result.violations
     counts = Counter(f.band for f in violations)
-    status = ("WARNING (advisory)" if advisory else "FAILED") if violations else "PASSED"
+    status = "FAILED" if violations else "PASSED"
+    if advisory and violations:
+        status = "WARNING (advisory)"
     lines = [
         "## Trivy vulnerability policy: " + status,
         "",
