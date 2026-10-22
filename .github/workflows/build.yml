@@ -175,6 +175,13 @@ jobs:
           secrets: |
             development/kv/data/next url | NEXT_URL;
             development/kv/data/next token | NEXT_TOKEN;
+      - name: Test Trivy policy and generate coverage
+        run: |
+          python3 -m venv "$RUNNER_TEMP/trivy-policy-tests"
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m pip install --disable-pip-version-check coverage==7.16.2
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage run -m unittest discover -s test/trivy -v
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage report
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage xml
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         env:
