@@ -203,6 +203,39 @@ def _summary_text(value: str) -> str:
     return html.escape(value, quote=True).replace("|", "&#124;")
 
 
+def _summary_row(finding: Finding) -> str:
+    advisory = _summary_text(finding.id)
+    # Only render HTTP(S) links; never turn metadata into executable URLs.
+    try:
+        url = urlsplit(finding.advisory_url)
+    except ValueError:
+        url = None
+    if (url and url.scheme in ("http", "https") and url.netloc
+            and len(finding.advisory_url) <= 256
+            and not any(c in finding.advisory_url for c in "\r\n|")):
+        advisory = f'<a href="{html.escape(finding.advisory_url, quote=True)}">{advisory}</a>'
+    cells = [
+        _summary_text(finding.package), advisory,
+        _summary_text(finding.installed_version),
+        _summary_text(finding.fixed_version or "Not available"),
+        _summary_text(finding.score_display), _summary_text(finding.source),
+    ]
+    return "| " + " | ".join(cells) + " |"
+
+
+def _summary_tables(findings: list[Finding]) -> list[str]:
+    lines = []
+    for target in dict.fromkeys(f.target for f in findings):
+        lines.extend([
+            f"**Target:** <code>{_summary_text(target)}</code>", "",
+            "| Package | Advisory | Installed | Fixed | Score | Score source |",
+            "| --- | --- | --- | --- | --- | --- |",
+        ])
+        lines.extend(_summary_row(f) for f in findings if f.target == target)
+        lines.append("")
+    return lines
+
+
 def format_summary(result: ReportResult, advisory: bool = False) -> str:
     violations = result.violations
     counts = Counter(f.band for f in violations)
@@ -242,31 +275,7 @@ def format_summary(result: ReportResult, advisory: bool = False) -> str:
         if not findings:
             continue
         lines.extend([f"<details open><summary>{band}: {counts[band]} failing finding(s)</summary>", ""])
-        for target in dict.fromkeys(f.target for f in findings):
-            lines.extend([
-                f"**Target:** <code>{_summary_text(target)}</code>", "",
-                "| Package | Advisory | Installed | Fixed | Score | Score source |",
-                "| --- | --- | --- | --- | --- | --- |",
-            ])
-            for finding in (f for f in findings if f.target == target):
-                advisory = _summary_text(finding.id)
-                # Only render HTTP(S) links; never turn metadata into executable URLs.
-                try:
-                    url = urlsplit(finding.advisory_url)
-                except ValueError:
-                    url = None
-                if (url and url.scheme in ("http", "https") and url.netloc
-                        and len(finding.advisory_url) <= 256
-                        and not any(c in finding.advisory_url for c in "\r\n|")):
-                    advisory = f'<a href="{html.escape(finding.advisory_url, quote=True)}">{advisory}</a>'
-                cells = [
-                    _summary_text(finding.package), advisory,
-                    _summary_text(finding.installed_version),
-                    _summary_text(finding.fixed_version or "Not available"),
-                    _summary_text(finding.score_display), _summary_text(finding.source),
-                ]
-                lines.append("| " + " | ".join(cells) + " |")
-            lines.append("")
+        lines.extend(_summary_tables(findings))
         lines.extend(["</details>", ""])
         remaining -= len(findings)
     if len(violations) > 200:
