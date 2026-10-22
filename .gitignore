@@ -34,3 +34,4 @@ Desktop.ini
 
 # ---- Local Test
 target_repository
+__pycache__/
