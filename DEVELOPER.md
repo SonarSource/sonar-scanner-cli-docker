@@ -78,6 +78,9 @@ The QA process is handled by GitHub Actions:
 ### Docker image vulnerability validation
 
 The build workflow scans the image identified by `needs.build.outputs.docker-image` in Repox.
+PR and merge queue scans are advisory: policy violations produce a warning and retain all findings
+in the summary and reports, but do not fail the job. Scan, authentication, and evaluation errors still
+fail CI. Branch builds, manual scans, and scheduled scans enforce the vulnerability policy.
 The standalone `Trivy analysis` workflow (`.github/workflows/trivy-analysis.yml`) scans the latest
 release published to Docker Hub (`sonarsource/sonar-scanner-cli:latest`) Monday–Friday at 01:15 UTC
 (`15 1 * * 1-5`). The schedule becomes active once the workflow is merged into the default branch.

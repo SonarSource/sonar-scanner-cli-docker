@@ -4,6 +4,9 @@ inputs:
   image-ref:
     description: Docker image to scan; the caller must authenticate to its registry.
     required: true
+  advisory:
+    description: Report policy violations without failing; scan and evaluation errors still fail.
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -41,7 +44,14 @@ runs:
     - name: Evaluate Trivy report against CVSS policy
       if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
       shell: bash
-      run: python3 .github/workflows/scripts/evaluate-trivy-report.py --summary "$GITHUB_STEP_SUMMARY" trivy-results.json
+      env:
+        ADVISORY: ${{ inputs.advisory }}
+      run: |
+        args=()
+        if [[ "$ADVISORY" == 'true' ]]; then
+          args+=(--advisory)
+        fi
+        python3 .github/workflows/scripts/evaluate-trivy-report.py "${args[@]}" --summary "$GITHUB_STEP_SUMMARY" trivy-results.json
 
     - name: Upload Trivy reports
       id: reports

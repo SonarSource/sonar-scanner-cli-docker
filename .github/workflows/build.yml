@@ -154,6 +154,7 @@ jobs:
         uses: ./.github/actions/trivy-scan
         with:
           image-ref: ${{ env.IMAGE_REF }}
+          advisory: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
 
   scan:
     needs:

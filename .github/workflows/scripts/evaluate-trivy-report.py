@@ -203,11 +203,12 @@ def _summary_text(value: str) -> str:
     return html.escape(value, quote=True).replace("|", "&#124;")
 
 
-def format_summary(result: ReportResult) -> str:
+def format_summary(result: ReportResult, advisory: bool = False) -> str:
     violations = result.violations
     counts = Counter(f.band for f in violations)
+    status = ("WARNING (advisory)" if advisory else "FAILED") if violations else "PASSED"
     lines = [
-        "## Trivy vulnerability policy: " + ("FAILED" if violations else "PASSED"),
+        "## Trivy vulnerability policy: " + status,
         "",
         f"**{len(violations)} finding(s) cause policy failure.** "
         f"{len(result.findings) - len(violations)} non-blocking; {len(result.suppressed)} suppressed.",
@@ -221,6 +222,13 @@ def format_summary(result: ReportResult) -> str:
         "Full HTML, JSON and SARIF reports are available in the workflow artifacts.",
         "",
     ]
+    if advisory:
+        lines.extend([
+            "> [!WARNING]" if violations else "> [!NOTE]",
+            "> Advisory scan: vulnerability policy violations do not block this PR. "
+            "The findings remain unresolved. Manual, scheduled, and branch scans enforce the policy.",
+            "",
+        ])
     if result.artifact:
         lines[2:2] = [f"**Image:** <code>{_summary_text(result.artifact)}</code>", ""]
     remaining = 200
@@ -302,6 +310,11 @@ def evaluate_path(path: Path) -> ReportResult:
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--advisory",
+        action="store_true",
+        help="Report policy violations without a failing exit code; evaluation errors still fail.",
+    )
+    parser.add_argument(
         "--summary",
         type=Path,
         help="Append a Markdown summary of policy failures to this file (e.g. GITHUB_STEP_SUMMARY).",
@@ -321,7 +334,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         result = evaluate_path(report_path)
         if args.summary:
             with args.summary.open("a", encoding="utf-8") as summary:
-                summary.write(format_summary(result))
+                summary.write(format_summary(result, advisory=args.advisory))
 
         if result.suppressed:
             print(f"-- {len(result.suppressed)} suppressed finding(s) (governed, unexpired) --")
@@ -344,6 +357,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         print()
 
     if total_violations:
+        if args.advisory:
+            print(f"WARNING: {total_violations} finding(s) violate the policy; advisory mode does not block this run.")
+            return 0
         print(f"FAILED: {total_violations} finding(s) violate the policy (CVSS >= Medium, or Unknown with no data).")
         return 1
 

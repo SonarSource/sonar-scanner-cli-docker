@@ -124,6 +124,37 @@ class SummaryTests(unittest.TestCase):
 
 
 class CommandTests(unittest.TestCase):
+    def test_advisory_mode_reports_violations_but_passes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "report.json"
+            summary = Path(directory) / "summary.md"
+            report.write_text(json.dumps({"Results": [{"Vulnerabilities": [
+                vulnerability("CVE-REMAINS", Severity="HIGH")]}]}), encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(policy.main([
+                    "--advisory", "--summary", str(summary), str(report)]), 0)
+            self.assertIn("WARNING: 1", output.getvalue())
+            self.assertIn("WARNING (advisory)", summary.read_text())
+            self.assertIn("do not block this PR", summary.read_text())
+            self.assertIn("CVE-REMAINS", summary.read_text())
+            report.write_text("{}", encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(policy.main(["--advisory", str(report)]), 0)
+            self.assertIn("PASSED", policy.format_summary(policy.ReportResult(), advisory=True))
+
+    def test_advisory_mode_does_not_hide_missing_or_invalid_reports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "report.json"
+            for content in (None, "invalid JSON", '{"Results": [42]}'):
+                with self.subTest(content=content):
+                    if content is not None:
+                        report.write_text(content, encoding="utf-8")
+                    completed = subprocess.run([
+                        sys.executable, str(SCRIPT), "--advisory", str(report)],
+                        capture_output=True, text=True, check=False)
+                    self.assertNotEqual(completed.returncode, 0)
+
     def test_cli_aggregates_reports_and_writes_summary_before_failure(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
