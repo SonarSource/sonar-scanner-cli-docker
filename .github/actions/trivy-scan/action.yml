@@ -40,7 +40,7 @@ runs:
     - name: Evaluate Trivy report against CVSS policy
       if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
       shell: bash
-      run: python3 .github/workflows/scripts/evaluate-trivy-report.py trivy-results.json
+      run: python3 .github/workflows/scripts/evaluate-trivy-report.py --summary "$GITHUB_STEP_SUMMARY" trivy-results.json
 
     - name: Upload Trivy reports
       id: reports

@@ -129,7 +129,10 @@ or `.git`, and has no vulnerability exceptions enabled by default.
 
 JSON reports include all severity levels and suppressed findings. SARIF and HTML are converted from the
 same JSON report. All three reports are uploaded as the `trivy-results` workflow artifact even when the
-policy fails. The job summary links to the artifact: download it and open `trivy-results.html` in a browser
+policy fails. The run summary shows the policy outcome, counts by policy severity, and expandable tables
+of the findings that cause failure, including advisory links, installed/fixed versions and CVSS sources.
+Up to 200 failing findings are displayed; all findings remain in the artifacts.
+The job summary also links to the artifact: download it and open `trivy-results.html` in a browser
 for tables of packages, vulnerability IDs, severities, installed/fixed versions, and advisory links.
 The HTML uses Trivy's official v0.70.0 template pinned to its release commit. Suppressed findings remain
 available in the JSON and evaluator logs; the upstream HTML template lists active vulnerabilities and
