@@ -34,3 +34,6 @@ Desktop.ini
 
 # ---- Local Test
 target_repository
+__pycache__/
+.coverage
+coverage.xml

@@ -1,0 +1,9 @@
+# Exceptions must include an owner, justification, tracking ticket, and expiry.
+# Trivy stops suppressing a finding once expired_at is reached.
+# Example:
+# vulnerabilities:
+#   - id: CVE-2023-12345
+#     statement: >-
+#       Owner: name@sonarsource.com. Justification: <reason>; tracked in SCANDOCKER-XXX.
+#     expired_at: 2026-12-31
+vulnerabilities: []

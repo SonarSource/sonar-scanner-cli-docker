@@ -1,0 +1,24 @@
+# Vulnerability policy adapted from SonarSource/docker-sonarqube (SCANDOCKER-91).
+# Enforcement uses evaluate-trivy-report.py; keep every severity in the JSON report.
+scan:
+  scanners:
+    - vuln
+    - secret
+  show-suppressed: true
+pkg:
+  # Include Python packages and other application dependencies as well as OS packages.
+  types:
+    - os
+    - library
+vulnerability:
+  ignore-unfixed: false
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+ignorefile: .trivyignore.yaml
+db:
+  skip-update: false
+timeout: 10m

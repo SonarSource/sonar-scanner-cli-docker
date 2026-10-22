@@ -7,6 +7,11 @@ on:
   pull_request:
   merge_group:
   workflow_dispatch:
+    inputs:
+      image-ref:
+        description: 'Existing image to validate; leave empty to build and validate this branch'
+        required: false
+        type: string
 
 env:
   DOCKER_REPOX_BUILDS_REGISTRY: repox-sonarsource-docker-builds.jfrog.io
@@ -22,6 +27,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.image-ref == '' }}
     name: Build Docker image
     runs-on: github-ubuntu-latest-s
     timeout-minutes: 30
@@ -114,6 +120,41 @@ jobs:
           echo "Test the ${DOCKER_IMAGE_BUILD_NUMBER} image"
           TEST_IMAGE="${DOCKER_IMAGE_BUILD_NUMBER}" ./test/bats/bin/bats --tap test
 
+  trivy-scan:
+    needs:
+      - build
+    if: ${{ !cancelled() && (needs.build.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.image-ref != '')) }}
+    name: Validate Docker image with Trivy
+    runs-on: github-ubuntu-latest-s
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+    env:
+      IMAGE_REF: ${{ inputs.image-ref || needs.build.outputs.docker-image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Vault
+        if: ${{ startsWith(env.IMAGE_REF, 'repox-sonarsource-docker-builds.jfrog.io/') }}
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@a7fa5fd4a4e4e0f2593f6137c0812cac196cf4ce # 3.7.0
+        with:
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release access_token | ARTIFACTORY_DEPLOY_PASSWORD;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-docker-release username | ARTIFACTORY_DEPLOY_USERNAME;
+      - name: Docker login to Repox registry
+        if: ${{ startsWith(env.IMAGE_REF, 'repox-sonarsource-docker-builds.jfrog.io/') }}
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.DOCKER_REPOX_BUILDS_REGISTRY }}
+          username: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_USERNAME }}
+          password: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_DEPLOY_PASSWORD }}
+      - name: Validate selected image
+        uses: ./.github/actions/trivy-scan
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+
   scan:
     needs:
       - build
@@ -134,6 +175,13 @@ jobs:
           secrets: |
             development/kv/data/next url | NEXT_URL;
             development/kv/data/next token | NEXT_TOKEN;
+      - name: Test Trivy policy and generate coverage
+        run: |
+          python3 -m venv "$RUNNER_TEMP/trivy-policy-tests"
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m pip install --disable-pip-version-check coverage==7.16.2
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage run -m unittest discover -s test/trivy -v
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage report
+          "$RUNNER_TEMP/trivy-policy-tests/bin/python" -m coverage xml
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         env:
