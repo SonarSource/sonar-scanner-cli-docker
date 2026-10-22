@@ -136,12 +136,18 @@ class CommandTests(unittest.TestCase):
                     "--advisory", "--summary", str(summary), str(report)]), 0)
             self.assertIn("WARNING: 1", output.getvalue())
             self.assertIn("WARNING (advisory)", summary.read_text())
+            self.assertIn("1 finding(s) violate the policy", summary.read_text())
+            self.assertNotIn("1 finding(s) cause policy failure", summary.read_text())
+            self.assertIn("The findings remain unresolved", summary.read_text())
             self.assertIn("do not block this PR", summary.read_text())
             self.assertIn("CVE-REMAINS", summary.read_text())
             report.write_text("{}", encoding="utf-8")
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(policy.main(["--advisory", str(report)]), 0)
-            self.assertIn("PASSED", policy.format_summary(policy.ReportResult(), advisory=True))
+            clean_summary = policy.format_summary(policy.ReportResult(), advisory=True)
+            self.assertIn("PASSED", clean_summary)
+            self.assertIn("> [!NOTE]", clean_summary)
+            self.assertNotIn("findings remain unresolved", clean_summary)
 
     def test_advisory_mode_does_not_hide_missing_or_invalid_reports(self):
         with tempfile.TemporaryDirectory() as directory:

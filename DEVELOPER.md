@@ -4,6 +4,14 @@
 docker build --tag scanner-cli-local .
 ```
 
+CI uses SonarSource's `config-pip` action to install Python packages through Repox.
+Its authenticated pip configuration is mounted temporarily during the Docker build using a BuildKit
+secret; it is not stored in the image. To use your Repox configuration for a local build:
+
+```bash
+docker build --secret "id=pip_config,src=$HOME/.pip/pip.conf" --tag scanner-cli-local .
+```
+
 ## How to run the Docker image
 
 ### On Linux with a local SonarQube

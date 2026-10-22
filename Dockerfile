@@ -43,7 +43,7 @@ ENV HOME=/tmp \
 # Copy Scanner installation from builder image
 COPY --from=builder /opt/sonar-scanner /opt/sonar-scanner
 
-RUN \
+RUN --mount=type=secret,id=pip_config,target=/etc/pip.conf \
     dnf install -y git \
     && dnf install -y tar \
     && dnf install -y nodejs22 \
