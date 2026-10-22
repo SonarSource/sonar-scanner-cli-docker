@@ -1,5 +1,5 @@
 name: Validate Docker image with Trivy
-description: Scan OS packages and enforce the docker-sonarqube CVSS policy (SCANDOCKER-91).
+description: Scan OS and application dependencies and validate certificate trust (SCANDOCKER-91).
 inputs:
   image-ref:
     description: Docker image to scan; the caller must authenticate to its registry.
@@ -17,26 +17,43 @@ runs:
         trivy-config: .github/trivy.yaml
         trivyignores: .trivyignore.yaml
         scanners: vuln
-        vuln-type: os
-        ignore-unfixed: true
+        vuln-type: os,library
         exit-code: '0' # The CVSS evaluator below decides whether findings fail the job.
 
+    - name: Check eMudhra certificate distrust
+      if: ${{ !cancelled() }}
+      shell: bash
+      env:
+        IMAGE_REF: ${{ inputs.image-ref }}
+      run: |
+        set -euo pipefail
+        COPYFILE_DISABLE=1 tar -C test/emudhra -cf - . | docker run --rm -i --network none \
+          --entrypoint /bin/sh "$IMAGE_REF" -c '
+            set -eu
+            work_dir=$(mktemp -d)
+            tar -xf - -C "$work_dir"
+            python3 "$work_dir/check-trust.py"
+          ' 2>&1 | tee emudhra-results.txt
+
     - name: Generate SARIF report
+      if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
       shell: bash
       run: trivy convert --format sarif --output trivy-results.sarif trivy-results.json
 
     - name: Evaluate Trivy report against CVSS policy
+      if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
       shell: bash
       run: python3 .github/workflows/scripts/evaluate-trivy-report.py trivy-results.json
 
     - name: Upload Trivy reports
-      if: ${{ always() && steps.scan.outcome == 'success' }}
+      if: ${{ always() }}
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: trivy-results
         path: |
           trivy-results.json
           trivy-results.sarif
+          emudhra-results.txt
 
     - name: Upload Trivy results to GitHub Security
       if: ${{ always() && hashFiles('trivy-results.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}

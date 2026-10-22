@@ -3,12 +3,10 @@
 
 Policy: a finding fails CI if its CVSS-derived severity band is Medium, High, or
 Critical -- or Unknown, meaning no CVSS score and no usable Trivy severity were
-available at all, so there's no data to say the finding is safe. Vulnerabilities
-without an upstream fix, and vulnerabilities suppressed by a governed, unexpired
-.trivyignore.yaml entry, are expected to already be absent from the report's
-"Vulnerabilities" list (enforced by the Trivy invocation itself via
---ignore-unfixed and --ignorefile) -- this script only judges whatever findings
-Trivy hands it.
+available at all, so there's no data to say the finding is safe. Findings without
+an upstream fix are included. Vulnerabilities suppressed by an unexpired
+.trivyignore.yaml entry are absent from the report's "Vulnerabilities" list
+(enforced by Trivy's --ignorefile); this script judges the remaining findings.
 
 CVSS score selection precedence, per finding:
   1. CVSS.nvd v4   (CVSS.nvd.V40Score)
