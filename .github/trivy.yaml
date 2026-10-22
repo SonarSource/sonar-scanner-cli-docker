@@ -3,6 +3,7 @@
 scan:
   scanners:
     - vuln
+    - secret
   show-suppressed: true
 pkg:
   # Include Python packages and other application dependencies as well as OS packages.
@@ -18,4 +19,6 @@ severity:
   - HIGH
   - CRITICAL
 ignorefile: .trivyignore.yaml
+db:
+  skip-update: false
 timeout: 10m

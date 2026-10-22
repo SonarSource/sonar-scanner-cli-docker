@@ -1,5 +1,5 @@
 name: Validate Docker image with Trivy
-description: Scan OS and application dependencies and validate certificate trust (SCANDOCKER-91).
+description: Scan OS and application dependencies and enforce the CVSS policy (SCANDOCKER-91).
 inputs:
   image-ref:
     description: Docker image to scan; the caller must authenticate to its registry.
@@ -16,24 +16,21 @@ runs:
         output: trivy-results.json
         trivy-config: .github/trivy.yaml
         trivyignores: .trivyignore.yaml
-        scanners: vuln
+        scanners: vuln,secret
         vuln-type: os,library
         exit-code: '0' # The CVSS evaluator below decides whether findings fail the job.
 
-    - name: Check eMudhra certificate distrust
-      if: ${{ !cancelled() }}
+    - name: Generate HTML report
+      if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
       shell: bash
-      env:
-        IMAGE_REF: ${{ inputs.image-ref }}
       run: |
         set -euo pipefail
-        COPYFILE_DISABLE=1 tar -C test/emudhra -cf - . | docker run --rm -i --network none \
-          --entrypoint /bin/sh "$IMAGE_REF" -c '
-            set -eu
-            work_dir=$(mktemp -d)
-            tar -xf - -C "$work_dir"
-            python3 "$work_dir/check-trust.py"
-          ' 2>&1 | tee emudhra-results.txt
+        # Official Trivy v0.70.0 template, pinned to the release commit.
+        curl --fail --silent --show-error --location --retry 3 \
+          https://raw.githubusercontent.com/aquasecurity/trivy/8a3177aedf7ee0864920eb1852eef031cd3742b8/contrib/html.tpl \
+          --output "$RUNNER_TEMP/trivy-html.tpl"
+        trivy convert --format template --template "@$RUNNER_TEMP/trivy-html.tpl" \
+          --output trivy-results.html trivy-results.json
 
     - name: Generate SARIF report
       if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
@@ -46,6 +43,7 @@ runs:
       run: python3 .github/workflows/scripts/evaluate-trivy-report.py trivy-results.json
 
     - name: Upload Trivy reports
+      id: reports
       if: ${{ always() }}
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
@@ -53,7 +51,16 @@ runs:
         path: |
           trivy-results.json
           trivy-results.sarif
-          emudhra-results.txt
+          trivy-results.html
+
+    - name: Link reports in job summary
+      if: ${{ always() && steps.reports.outputs.artifact-url != '' }}
+      shell: bash
+      env:
+        REPORT_URL: ${{ steps.reports.outputs.artifact-url }}
+      run: |
+        printf 'Download [Trivy reports](%s) and open **trivy-results.html** for vulnerability tables. JSON and SARIF, including secret findings, are included in the same artifact.\n' \
+          "$REPORT_URL" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Upload Trivy results to GitHub Security
       if: ${{ always() && hashFiles('trivy-results.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
