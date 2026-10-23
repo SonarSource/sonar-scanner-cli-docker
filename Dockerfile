@@ -38,19 +38,24 @@ ENV HOME=/tmp \
     POETRY_CACHE_DIR=/opt/poetry/cache \
     POETRY_VIRTUALENVS_PATH=/opt/poetry/virtualenvs \
     LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+    LC_ALL=C.UTF-8 \
+    NODE_OPTIONS=--use-openssl-ca
 
 # Copy Scanner installation from builder image
 COPY --from=builder /opt/sonar-scanner /opt/sonar-scanner
 
-RUN \
-    dnf install -y git \
+COPY certificates/emsign-ecc-root-ca-g3.pem /etc/pki/ca-trust/source/blocklist/emsign-ecc-root-ca-g3.pem
+
+RUN --mount=type=secret,id=pip_config,target=/etc/pip.conf,required=true \
+    update-ca-trust extract \
+    && dnf install -y git \
     && dnf install -y tar \
     && dnf install -y nodejs22 \
     && alternatives --set node /usr/bin/node-22 \
     && dnf install -y python3.13 \
     && ln -s /usr/bin/python3.13 /usr/local/bin/python3 \
     && python3 -m ensurepip --upgrade \
+    && python3 -m pip install --no-cache-dir --only-binary=:all: --upgrade pip==26.2.2 certifi==2026.10.19 \
     && pip3 install --no-cache-dir --only-binary=poetry poetry==2.4.3 \
     && pip3 cache purge \
     && dnf clean all \
@@ -67,7 +72,8 @@ RUN \
        "${POETRY_CACHE_DIR}" "${POETRY_VIRTUALENVS_PATH}" \
     # Security updates
     && dnf upgrade -y --releasever=latest --security \
-    && dnf clean all
+    && dnf clean all \
+    && update-ca-trust extract
 
 COPY --chown=scanner-cli:scanner-cli bin /usr/bin/
 
