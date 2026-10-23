@@ -1,8 +1,12 @@
 # How to build the Docker image
 
 ```bash
-docker build --tag scanner-cli-local .
+docker build --pull --no-cache \
+  --secret id=pip_config,src=/path/to/repox-pip.conf \
+  --tag scanner-cli-local .
 ```
+
+The pip configuration must use the company Repox PyPI index. It is mounted as a BuildKit secret and is not stored in the image.
 
 ## How to run the Docker image
 
