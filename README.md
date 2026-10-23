@@ -45,3 +45,11 @@ Copyright 2015-2025 SonarSource.
 
 Licensed under the [GNU Lesser General Public License, Version 3.0](http://www.gnu.org/licenses/lgpl.txt)
 
+
+## Certificate trust mitigation
+
+The image temporarily distrusts the emSign ECC Root CA - G3 root through AL2023's native CA blocklist while Amazon's eMudhra fix is pending. Regenerating system trust also updates Corretto's default Java trust store. Node uses the system CA store through `NODE_OPTIONS=--use-openssl-ca`; Python's standalone certifi and pip's vendored bundle are updated independently.
+
+This follows the [Java mitigation guidance](https://ops.java/emudhra) for the affected trust path present in this base. The other affected anchor, AAA Certificate Services, is already absent from the investigated AL2023 stores; alternate cross-signed paths must still be retested when updating the base. Distrusting the root can also reject legitimate certificates issued through that root. Review the mitigation when [Amazon's fixed packages](https://explore.alas.aws.amazon.com/CVE-2026-113470.html) become available. Its DER SHA-256 fingerprint is `86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b`.
+
+Custom or mounted trust stores, overridden Node options, and JREs provisioned by SonarQube Server or Cloud need separate verification. Rebuild and replace existing images/containers to apply this mitigation.
