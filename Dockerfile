@@ -25,7 +25,7 @@ RUN set -eux; \
     apk del --purge build-dependencies;
 
 
-FROM amazoncorretto:21-al2023 AS scanner-cli-base
+FROM amazoncorretto:25-al2023 AS scanner-cli-base
 
 ARG SONAR_SCANNER_HOME=/opt/sonar-scanner
 ENV HOME=/tmp \
