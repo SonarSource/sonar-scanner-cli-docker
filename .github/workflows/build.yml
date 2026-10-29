@@ -35,7 +35,7 @@ jobs:
 
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         with:
-          version: 2026.10.17
+          version: 2026.10.18
 
       - name: Configure Repox PyPI and build number
         uses: SonarSource/ci-github-actions/config-pip@62463382a24f2004ffa20adbe9985f6459e031e6 # v2
@@ -130,7 +130,7 @@ jobs:
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         with:
           cache_save: false
-          version: 2026.10.17
+          version: 2026.10.18
       - name: Vault
         id: secrets
         uses: SonarSource/vault-action-wrapper@a7fa5fd4a4e4e0f2593f6137c0812cac196cf4ce  # 3.7.0
