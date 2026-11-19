@@ -37,7 +37,7 @@ jobs:
 
       - uses: SonarSource/mise-action-wrapper@65aa289d3f408f4999d13a52a14cde4f54b48442 # 2.0.0
         with:
-          version: 2026.11.7
+          version: 2026.11.8
           persist_github_token: false
 
       - name: Configure Repox PyPI and build number
