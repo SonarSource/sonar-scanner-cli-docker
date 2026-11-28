@@ -139,7 +139,7 @@ jobs:
           TAG_NAME: ${{ inputs.tag_name }}
         run: gh release edit "$TAG_NAME" --draft=false
       - name: Notify success on Slack
-        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        uses: slackapi/slack-github-action@0bc3581177d9a0f8d555e07689384b376528e8fa # v4.1.0
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
@@ -154,7 +154,7 @@ jobs:
               ]
             }
       - name: Notify failures on Slack
-        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        uses: slackapi/slack-github-action@0bc3581177d9a0f8d555e07689384b376528e8fa # v4.1.0
         if: failure()
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
